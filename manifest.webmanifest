@@ -2,7 +2,7 @@
   "id": "./",
   "name": "NiceShot Photo Sharing",
   "short_name": "Photo Sharing",
-  "description": "Fotos de eventos de padel: entre com o PIN, ache suas fotos com uma selfie e baixe.",
+  "description": "Fotos de eventos de padel: entre com o PIN, ache suas fotos com uma selfie e descarregue.",
   "lang": "pt-BR",
   "start_url": "./",
   "scope": "./",
