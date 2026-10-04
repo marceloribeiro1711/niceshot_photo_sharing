@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NiceShot</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Photo Sharing</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1f5fbf">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
@@ -14,6 +14,7 @@
 :root{--bg:#f2f5f7;--card:#fff;--ink:#12202b;--mute:#5b6b78;--line:#d5dde3;--blue:#1f5fbf;--ball:#d8e24a;--red:#b3261e}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1820;--card:#17232d;--ink:#e8eef2;--mute:#93a4b1;--line:#2a3945;--blue:#6aa2f5;--red:#f2877f}}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 body{display:flex;flex-direction:column;height:calc(var(--vh,1vh)*100);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 header{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
@@ -23,17 +24,19 @@ button{min-height:44px;padding:0 14px;border:1px solid var(--line);background:va
 button.p{background:var(--blue);color:#fff;border-color:var(--blue)}
 button:disabled{opacity:.45}
 main{flex:1;min-height:0;overflow-y:auto;width:100%;max-width:720px;margin:0 auto;padding:0 14px}
-#album{padding-bottom:90px}
+#album{padding-bottom:24px}
 .card{display:block;width:100%;text-align:left;margin:10px 0;padding:14px;border-radius:10px;background:var(--card);border:1px solid var(--line)}
 .card b{display:block;font-size:17px}
 .mute{color:var(--mute);font-size:14px}
-#pinbox{text-align:center;padding-top:30px}
+#pinbox{text-align:center;padding-top:16px}
+#pinbox h2{margin:0 0 4px;font-size:24px;line-height:1.2}
 #pin{width:9ch;font:700 40px/1.3 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.2em;text-align:center;background:var(--ball);color:#1b2200;border:0;border-radius:8px;padding:4px 0 4px .2em}
 .bar{position:sticky;top:0;z-index:2;display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;background:var(--bg)}
 .g{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
 .t{position:relative}
 .t img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:var(--line)}
 .k{position:absolute;top:4px;right:4px;width:30px;min-height:30px;height:30px;padding:0;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);color:#fff;font-weight:700}
+.t.cur::after{content:"";position:absolute;inset:0;border:3px solid var(--ball);pointer-events:none}
 .t.on img{outline:3px solid var(--blue);outline-offset:-3px}
 .t.on .k{background:var(--blue)}
 .prog{margin:8px 0;padding:10px;border-radius:8px;background:var(--card);border:1px solid var(--line)}
@@ -42,41 +45,46 @@ main{flex:1;min-height:0;overflow-y:auto;width:100%;max-width:720px;margin:0 aut
 #car{flex:1;min-height:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
 #car::-webkit-scrollbar{display:none}
 .slide{flex:0 0 100%;scroll-snap-align:center;display:flex;flex-direction:column;min-height:0}
-.mid{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
+.mid{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;padding-top:10px}
 .cw{position:relative;width:min(70%,calc(var(--vh,1vh)*36));aspect-ratio:1;margin:0 auto}
 .cover{position:absolute;inset:0;overflow:hidden;border-radius:12px;background:linear-gradient(135deg,var(--blue),#0d3470)}
 .cover img{position:absolute;inset:0;width:100%;height:100%}
 .cover .bg{object-fit:cover;filter:blur(22px) brightness(.7);transform:scale(1.25)}
 .cover .fg{object-fit:contain}
-.arr{position:absolute;top:50%;transform:translateY(-50%);width:36px;min-height:36px;height:36px;padding:0;border-radius:50%;border:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
-.arr.l{left:-18px}.arr.r{right:-18px}
-.arr svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.hb{display:flex;align-items:center;gap:6px;min-height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;text-decoration:none;color:var(--ink);flex:none}
+.hb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dock{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;background:var(--card);border-top:1px solid var(--line)}
+.dock .nv{width:48px;padding:0;flex:none;display:flex;align-items:center;justify-content:center}
+.dock .nv svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.dock .c{flex:1}
+#ad{justify-content:center}#ad .c{flex:0 1 280px}
 .info{padding:14px 18px 4px;text-align:center}
 .info h2{margin:0 0 4px;font-size:24px;line-height:1.2}
 .meta{color:var(--mute);font-size:15px}
-.ico{display:flex;justify-content:space-around;padding:8px 8px 6px;margin-top:8px;border-top:1px solid var(--line)}
 a{color:var(--blue)}
-.ico button,.ico a{display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;font-size:12px;flex:1;min-width:0;padding:6px 2px;text-align:center;color:var(--ink);text-decoration:none}
-.ico svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #dots{display:flex;justify-content:center;gap:6px;padding:6px 0 8px}
 #dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
 #dots i.on{background:var(--blue)}
-dialog{width:min(560px,96vw);border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:14px}
-dialog::backdrop{background:rgba(0,0,0,.6)}
-#vw{padding:10px;text-align:center}
-#vw img{max-width:100%;max-height:70vh;border-radius:6px}
+#vw{position:fixed;inset:0;z-index:10;background:#000;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#vw img{max-width:100%;max-height:100%;object-fit:contain}
+#vw .top{position:absolute;top:calc(8px + env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;color:#fff}
+#vw button.v{width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.5);color:#fff;font-weight:700}
+#vw button.v.on{background:var(--blue)}
+#vw .side{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:56px;min-height:56px;padding:0;border:0;border-radius:8px;background:rgba(0,0,0,.4);color:#fff;font-size:30px}
+#vw .side.l{left:6px}#vw .side.r{right:6px}
 textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
 .r{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
 #msg{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:8px;display:none;z-index:9}
 </style>
 </head>
 <body>
-<header><button id="bk" hidden aria-label="Voltar">←</button><h1 id="ti">NiceShot</h1></header>
+<header><button id="bk" hidden aria-label="Voltar">←</button><h1 id="ti">Photo Sharing</h1><a class="hb" id="igh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/></svg><span>Fale com a NiceShot</span></a></header>
 <main>
   <section id="home"><div id="car"></div><div id="dots"></div></section>
   <section id="pinbox" hidden>
-    <p>Digite o PIN do evento</p>
-    <input id="pin" type="text" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="PIN de 4 dígitos">
+    <h2 id="pn1"></h2><div class="meta" id="pn2"></div>
+    <p style="margin:22px 0 10px">Digite o PIN do evento</p>
+    <input id="pin" type="tel" inputmode="numeric" pattern="[0-9]*" enterkeyhint="go" maxlength="4" autocomplete="off" aria-label="PIN de 4 dígitos">
     <p class="mute" id="pe"></p>
     <button class="p" id="go">Entrar</button>
   </section>
@@ -92,13 +100,15 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
     <p class="mute" style="text-align:center;padding:18px 8px 0">Dúvidas ou pedido de remoção de foto?<br><a id="igf" target="_blank" rel="noopener">Fale com a NiceShot no Instagram @niceshot.pt</a></p>
   </section>
 </main>
+<nav class="dock" id="hd"><button class="nv" id="hp" disabled aria-label="Evento anterior"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="p c" id="hv" disabled>Ver Fotos</button><button class="nv" id="hn" disabled aria-label="Próximo evento"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></nav>
+<nav class="dock" id="ad" hidden><button class="p c" id="zm" disabled>Ampliar foto</button></nav>
 <input type="file" id="sfile" accept="image/*" capture="user" hidden>
 
-<dialog id="vw"><img id="vi" alt="">
-  <div class="mute" id="vn"></div>
-  <div class="r"><button id="pv">Anterior</button><button id="nx">Próxima</button></div>
-  <div class="r"><button id="vc">Fechar</button></div>
-</dialog>
+<div id="vw" hidden>
+  <img id="vi" alt="">
+  <div class="top"><button class="v" id="vc" aria-label="Fechar">✕</button><span id="vn"></span><button class="v" id="vs" aria-label="Marcar para download"></button></div>
+  <button class="side l" id="pv" aria-label="Foto anterior">‹</button><button class="side r" id="nx" aria-label="Próxima foto">›</button>
+</div>
 <div id="msg" role="status"></div>
 
 <script>
@@ -109,8 +119,8 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const S = { ev: null, tok: "", photos: [], sel: new Set(), mine: null, idx: 0, run: 0, desc: new Map(), files: [] };
 
-const setVh = () => document.documentElement.style.setProperty("--vh", innerHeight / 100 + "px");
-setVh(); addEventListener("resize", setVh);
+const setVh = () => { document.documentElement.style.setProperty("--vh", (visualViewport?.height || innerHeight) / 100 + "px"); scrollTo(0, 0); };
+setVh(); addEventListener("resize", setVh); visualViewport?.addEventListener("resize", setVh);
 function say(t) { const m = $("#msg"); m.textContent = t; m.style.display = "block"; clearTimeout(say.t); say.t = setTimeout(() => m.style.display = "none", 3800); }
 async function j(p, o) {
   const r = await fetch(API + p, o); let b = {}; try { b = await r.json(); } catch {}
@@ -121,7 +131,8 @@ const post = (p, body) => j(p, { method: "POST", headers: { "Content-Type": "app
 const thumb = (p, s) => `${API}/api/thumb/${p.id}?s=${s}&k=${p.k}&token=${encodeURIComponent(S.tok)}`;
 function show(id) {
   for (const s of ["home", "pinbox", "album"]) $("#" + s).hidden = s !== id;
-  $("#bk").hidden = id === "home"; if (id === "home") $("#ti").textContent = "NiceShot";
+  $("#bk").hidden = id === "home"; $("#igh").hidden = id !== "home"; $("#hd").hidden = id !== "home"; $("#ad").hidden = id !== "album";
+  $("#ti").textContent = id === "album" && S.ev ? S.ev.name : "Photo Sharing";
 }
 
 /* ---- tela inicial: carrossel de eventos ---- */
@@ -133,35 +144,31 @@ const ICON = {
   next: '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>'
 };
 const fmtDate = d => { if (!d) return ""; const t = new Date(d + "T12:00:00"); return isNaN(t) ? d : t.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" }); };
-const dots = () => { const c = $("#car"), n = Math.round(c.scrollLeft / (c.clientWidth || 1)); document.querySelectorAll("#dots i").forEach((d, k) => d.classList.toggle("on", k === n)); };
+const slideN = () => { const c = $("#car"); return Math.round(c.scrollLeft / (c.clientWidth || 1)); };
+const dots = () => { const n = slideN(), t = (S.evs || []).length; document.querySelectorAll("#dots i").forEach((d, k) => d.classList.toggle("on", k === n)); $("#hp").disabled = n <= 0; $("#hn").disabled = n >= t - 1; $("#hv").disabled = !t; };
 async function home() {
   S.run++; show("home"); $("#car").innerHTML = `<p class="mute" style="padding:20px">Carregando…</p>`; $("#dots").innerHTML = "";
   try {
     const evs = await j("/api/events"); S.evs = evs;
     $("#car").innerHTML = evs.length ? evs.map(e => { const im = e.cover ? `${API}/api/cover/${e.id}?s=800` : "";
       return `<article class="slide" data-id="${e.id}"><div class="mid">
-      <div class="cw"><div class="cover">${im ? `<img class="bg" alt="" src="${im}" onerror="this.closest('.cover').innerHTML=''"><img class="fg" alt="" src="${im}">` : ""}</div>
-        <button class="arr l" data-n="-1" aria-label="Evento anterior">${ICON.prev}</button><button class="arr r" data-n="1" aria-label="Próximo evento">${ICON.next}</button></div>
-      <div class="info"><h2>${esc(e.name)}</h2><div class="meta">${esc(fmtDate(e.date))}</div>${e.place ? `<div class="meta">${esc(e.place)}</div>` : ""}</div></div>
-      <nav class="ico"><button data-a="photos">${ICON.photos}<span>Todas as Fotos</span></button><button data-a="selfie">${ICON.selfie}<span>Procurar com Selfie</span></button><a href="${IG}" target="_blank" rel="noopener">${ICON.ig}<span>Fale com a NiceShot</span></a></nav></article>`; }).join("") : `<p class="mute" style="padding:20px">Nenhum álbum disponível no momento.</p>`;
+      <div class="cw"><div class="cover">${im ? `<img class="bg" alt="" src="${im}" onerror="this.closest('.cover').innerHTML=''"><img class="fg" alt="" src="${im}">` : ""}</div></div>
+      <div class="info"><h2>${esc(e.name)}</h2><div class="meta">${esc(fmtDate(e.date))}</div>${e.place ? `<div class="meta">${esc(e.place)}</div>` : ""}</div></div></article>`; }).join("") : `<p class="mute" style="padding:20px">Nenhum álbum disponível no momento.</p>`;
     $("#dots").innerHTML = evs.length > 1 ? evs.map(() => "<i></i>").join("") : ""; dots();
-    document.querySelectorAll(".slide").forEach((s, n, all) => {
-      s.querySelector(".arr.l").style.visibility = n ? "visible" : "hidden";
-      s.querySelector(".arr.r").style.visibility = n < all.length - 1 ? "visible" : "hidden";
-    });
-  } catch (e) { $("#car").innerHTML = `<p class="mute" style="padding:20px">Não consegui carregar os eventos (${esc(e.message)}). Verifique a conexão.</p>`; }
+  } catch (e) { S.evs = []; dots(); $("#car").innerHTML = `<p class="mute" style="padding:20px">Não consegui carregar os eventos (${esc(e.message)}). Verifique a conexão.</p>`; }
 }
 $("#car").onscroll = dots;
-$("#car").onclick = async e => {
-  if (e.target.closest("a")) return;
-  const ar = e.target.closest(".arr");
-  if (ar) { $("#car").scrollBy({ left: Number(ar.dataset.n) * $("#car").clientWidth, behavior: "smooth" }); return; }
-  const sl = e.target.closest(".slide"); if (!sl) return; const b = e.target.closest("[data-a]");
-  S.ev = S.evs.find(x => x.id === sl.dataset.id); S.after = b ? b.dataset.a : "photos"; $("#ti").textContent = S.ev.name;
+const go = async id => {
+  S.ev = (S.evs || []).find(x => x.id === id); if (!S.ev) return;
   const t = sessionStorage.getItem("t_" + S.ev.id);
   if (t) { S.tok = t; try { return await openAlbum(); } catch {} }
+  $("#pn1").textContent = S.ev.name; $("#pn2").textContent = [fmtDate(S.ev.date), S.ev.place].filter(Boolean).join(" · ");
   $("#pe").textContent = ""; $("#pin").value = ""; show("pinbox"); $("#pin").focus();
 };
+$("#car").onclick = e => { const sl = e.target.closest(".slide"); if (sl) go(sl.dataset.id); };
+$("#hv").onclick = () => go(S.evs?.[slideN()]?.id);
+$("#hp").onclick = () => $("#car").scrollBy({ left: -$("#car").clientWidth, behavior: "smooth" });
+$("#hn").onclick = () => $("#car").scrollBy({ left: $("#car").clientWidth, behavior: "smooth" });
 $("#bk").onclick = home;
 
 /* ---- PIN ---- */
@@ -180,8 +187,7 @@ $("#pin").oninput = e => { e.target.value = e.target.value.replace(/\D/g, ""); i
 async function openAlbum() {
   const r = await j("/api/photos?token=" + encodeURIComponent(S.tok));
   S.photos = r.photos; S.info = r.event; S.sel.clear(); S.mine = null; S.desc = new Map(); S.run++;
-  $("#pg").hidden = true; $("#sv").hidden = true; show("album"); draw();
-  const hint = { selfie: "Toque em “Procurar com Selfie”." }[S.after]; S.after = ""; if (hint) say(hint);
+  S.cur = null; $("#pg").hidden = true; $("#sv").hidden = true; show("album"); draw();
 }
 const view = () => S.mine ? S.photos.filter(p => S.mine.has(p.id)) : S.photos;
 const dmy = d => d.split("-").reverse().join("/");
@@ -191,33 +197,43 @@ const waitMsg = () => {
 };
 function draw() {
   const list = view(), canDl = S.info?.allowDownload !== false;
-  $("#gr").innerHTML = list.length ? list.map((p, i) => `<div class="t ${S.sel.has(p.id) ? "on" : ""}" data-i="${i}" data-id="${p.id}"><img loading="lazy" alt="" src="${thumb(p, 400)}">${canDl ? `<button class="k" aria-label="Selecionar">${S.sel.has(p.id) ? "✓" : ""}</button>` : ""}</div>`).join("") : `<p class="mute" style="padding:10px 0">${waitMsg()}</p>`;
+  if (!list.some(p => p.id === S.cur)) S.cur = null; $("#zm").disabled = !S.cur;
+  $("#gr").innerHTML = list.length ? list.map((p, i) => `<div class="t ${S.sel.has(p.id) ? "on" : ""} ${p.id === S.cur ? "cur" : ""}" data-i="${i}" data-id="${p.id}"><img loading="lazy" alt="" src="${thumb(p, 400)}">${canDl ? `<button class="k" aria-label="Selecionar">${S.sel.has(p.id) ? "✓" : ""}</button>` : ""}</div>`).join("") : `<p class="mute" style="padding:10px 0">${waitMsg()}</p>`;
   $("#dl").hidden = !canDl; $("#dl").disabled = !S.sel.size; $("#dl").textContent = "Baixar" + (S.sel.size ? ` (${S.sel.size})` : "");
   const f = $("#fl"); f.hidden = !S.mine;
   if (S.mine) f.innerHTML = `${list.length} foto(s) com você. <button id="all" style="min-height:32px">Mostrar todas</button>`;
 }
+function toggleSel(id) {
+  if (S.sel.has(id)) S.sel.delete(id);
+  else if (S.sel.size >= (S.info?.maxBatch || 10)) { say(`Limite de ${S.info?.maxBatch || 10} fotos por download.`); return false; }
+  else S.sel.add(id);
+  return true;
+}
 $("#gr").onclick = e => {
   const t = e.target.closest(".t"); if (!t) return; const id = t.dataset.id;
-  if (e.target.closest(".k")) {
-    if (S.sel.has(id)) S.sel.delete(id);
-    else if (S.sel.size >= (S.info?.maxBatch || 10)) return say(`Limite de ${S.info?.maxBatch || 10} fotos por download.`);
-    else S.sel.add(id);
-    return draw();
-  }
-  S.idx = Number(t.dataset.i); openViewer();
+  if (e.target.closest(".k")) { toggleSel(id); return draw(); }
+  S.cur = id; document.querySelectorAll("#gr .t").forEach(x => x.classList.toggle("cur", x.dataset.id === id)); $("#zm").disabled = false;
 };
+$("#zm").onclick = () => { S.idx = view().findIndex(p => p.id === S.cur); if (S.idx >= 0) openViewer(); };
 $("#fl").onclick = e => { if (e.target.id === "all") { S.mine = null; draw(); } };
 
-/* ---- visualizador ---- */
+/* ---- visualizador (tela cheia) ---- */
 function openViewer() {
   const list = view(), p = list[S.idx]; if (!p) return;
   $("#vi").src = thumb(p, 1600); $("#vn").textContent = `${S.idx + 1} de ${list.length}`;
   $("#pv").disabled = S.idx === 0; $("#nx").disabled = S.idx >= list.length - 1;
-  if (!$("#vw").open) $("#vw").showModal();
+  const on = S.sel.has(p.id); $("#vs").hidden = S.info?.allowDownload === false; $("#vs").textContent = on ? "✓" : ""; $("#vs").classList.toggle("on", on);
+  for (const q of [list[S.idx + 1], list[S.idx - 1]]) if (q) new Image().src = thumb(q, 1600);
+  $("#vw").hidden = false;
 }
-$("#pv").onclick = () => { S.idx--; openViewer(); };
-$("#nx").onclick = () => { S.idx++; openViewer(); };
-$("#vc").onclick = () => $("#vw").close();
+const step = d => { const n = S.idx + d; if (n >= 0 && n < view().length) { S.idx = n; openViewer(); } };
+function closeViewer() { $("#vw").hidden = true; S.cur = view()[S.idx]?.id || S.cur; draw(); document.querySelector("#gr .t.cur")?.scrollIntoView({ block: "center" }); }
+$("#pv").onclick = () => step(-1); $("#nx").onclick = () => step(1); $("#vc").onclick = closeViewer;
+$("#vs").onclick = () => { const p = view()[S.idx]; if (p && toggleSel(p.id)) openViewer(); };
+let tx = null;
+$("#vw").addEventListener("touchstart", e => { tx = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
+$("#vw").addEventListener("touchend", e => { if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(dx) > 60) step(dx < 0 ? 1 : -1); }, { passive: true });
+addEventListener("keydown", e => { if ($("#vw").hidden) return; if (e.key === "ArrowRight") step(1); else if (e.key === "ArrowLeft") step(-1); else if (e.key === "Escape") closeViewer(); });
 /* ---- download (até 10) ---- */
 $("#dl").onclick = async () => {
   const ids = [...S.sel], files = []; $("#dl").disabled = true;
@@ -273,7 +289,7 @@ $("#sfile").onchange = async e => {
   } catch (err) { prog("", -1); say(err.message || "Não foi possível comparar as fotos."); }
 };
 
-$("#igf").href = IG;
+$("#igf").href = IG; $("#igh").href = IG;
 home();
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 </script>
