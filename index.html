@@ -259,7 +259,7 @@ $("#hv").onclick = () => go(S.evs?.[slideN()]?.id);
 $("#hp").onclick = () => $("#car").scrollBy({ left: -$("#car").clientWidth, behavior: "smooth" });
 $("#hn").onclick = () => $("#car").scrollBy({ left: $("#car").clientWidth, behavior: "smooth" });
 $("#bk").onclick = home;
-const APP_VER = "1.5"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.6"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -478,7 +478,7 @@ $("#dl").onclick = async () => {
       const p = S.photos.find(x => x.id === ids[i]); say(tr("dling", { i: i + 1, n: ids.length }));
       const r = await fetch(`${API}/api/download/${p.id}?k=${p.k}&token=${encodeURIComponent(S.tok)}`);
       if (!r.ok) { let b = {}; try { b = await r.json(); } catch {} throw new Error(srv(b.error) || tr("dl_fail")); }
-      const b = await r.blob(); files.push(new File([b], p.name, { type: b.type || "image/jpeg" }));
+      const b = await r.blob(); const ty = /^image\//.test(b.type) ? b.type : /\.png$/i.test(p.name) ? "image/png" : /\.hei[cf]$/i.test(p.name) ? "image/heic" : /\.webp$/i.test(p.name) ? "image/webp" : "image/jpeg"; files.push(new File([b], p.name, { type: ty }));
     }
     if ((IOS || ANDROID) && navigator.canShare?.({ files })) { if (!$("#vw").hidden) closeViewer(); S.files = files; $("#sv").textContent = tr("save_gallery", { n: files.length }); $("#sv").hidden = false; say(tr("done_tap")); }
     else { for (const f of files) { const a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; a.click(); await new Promise(r => setTimeout(r, 500)); URL.revokeObjectURL(a.href); } say(tr("downloaded")); S.sel.clear(); }
