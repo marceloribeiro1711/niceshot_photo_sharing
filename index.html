@@ -57,7 +57,11 @@ main{flex:1;min-height:0;overflow-y:auto;width:100%;max-width:720px;margin:0 aut
 .dock .nv{width:48px;padding:0;flex:none;display:flex;align-items:center;justify-content:center}
 .dock .nv svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .dock .c{flex:1}
-#ad{justify-content:center}#ad .c{flex:0 1 280px}
+#ad{gap:4px;padding:6px 8px}
+#ad button{flex:1;min-width:0;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px 2px;border:0;background:none;color:var(--ink);font-size:12px;line-height:1.15}
+#ad svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#ad #dl:not(:disabled){color:var(--blue);font-weight:600}
+.bar:has(#sv[hidden]){display:none}
 .info{padding:14px 18px 4px;text-align:center}
 .info h2{margin:0 0 4px;font-size:24px;line-height:1.2}
 .meta{color:var(--mute);font-size:15px}
@@ -65,9 +69,9 @@ a{color:var(--blue)}
 #dots{display:flex;justify-content:center;gap:6px;padding:6px 0 8px}
 #dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
 #dots i.on{background:var(--blue)}
-#vw{position:fixed;inset:0;z-index:10;background:#000;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#vw{flex:1;min-height:0;position:relative;background:#000;display:flex;align-items:center;justify-content:center}
 #vw img{max-width:100%;max-height:100%;object-fit:contain}
-#vw .top{position:absolute;top:calc(8px + env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;color:#fff}
+#vw .top{position:absolute;top:8px;left:12px;right:10px;display:flex;justify-content:space-between;align-items:center;color:#fff;text-shadow:0 1px 3px #000}
 #vw button.v{width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.5);color:#fff;font-weight:700}
 #vw button.v.on{background:var(--blue)}
 #vw .side{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:56px;min-height:56px;padding:0;border:0;border-radius:8px;background:rgba(0,0,0,.4);color:#fff;font-size:30px}
@@ -75,12 +79,32 @@ a{color:var(--blue)}
 textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
 .r{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
 #msg{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:8px;display:none;z-index:9}
+#adm button,#adm input,#adm select{font:inherit;color:inherit}
+#adm button{min-height:44px;padding:0 14px;border:1px solid var(--line);background:var(--card);border-radius:8px;cursor:pointer}
+#adm button.danger{color:var(--red)}
+#adm button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+#adm .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+#adm .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+#adm .pin{display:inline-block;margin:10px 0 6px;padding:4px 14px;background:var(--ball);color:#1b2200;font:700 34px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;border-radius:6px}
+#adm .off{opacity:.55}
+#adm .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#adm dialog{width:min(560px,94vw);border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:16px}
+#adm dialog::backdrop{background:rgba(0,0,0,.45)}
+#adm label{display:block;margin:10px 0 4px;font-size:14px;color:var(--mute)}
+#adm input[type=text],#adm input[type=number],#adm input[type=password],#adm input[type=date]{width:100%;min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+#adm .chk{display:flex;gap:8px;align-items:center;margin-top:12px;color:var(--ink);font-size:16px}
+#adm .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px}
+#adm .grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;background:var(--line);cursor:pointer}
+#adm .grid>div{position:relative}#adm .st{position:absolute;top:2px;right:2px;min-height:30px;width:30px;padding:0;background:rgba(0,0,0,.55);color:#fff;border:0;border-radius:50%}#adm .st.on{color:#ffd84a;background:rgba(0,0,0,.75)}
+#adm .grid span{display:block;font-size:11px;color:var(--mute);text-align:center}
+#adm .cam{border:1px solid var(--line);border-radius:8px;padding:4px 12px 12px;margin-top:14px}#adm .rng{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#appver{align-self:flex-start;padding:6px 14px;min-height:32px;font-size:12px;color:var(--mute);user-select:none;-webkit-user-select:none}
 </style>
 </head>
 <body>
 <header><button id="bk" hidden aria-label="Voltar">←</button><h1 id="ti">Photo Sharing</h1><a class="hb" id="igh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/></svg><span>Fale com a NiceShot</span></a></header>
 <main>
-  <section id="home"><div id="car"></div><div id="dots"></div></section>
+  <section id="home"><div id="car"></div><div id="dots"></div><div id="appver"></div></section>
   <section id="pinbox" hidden>
     <h2 id="pn1"></h2><div class="meta" id="pn2"></div>
     <p style="margin:22px 0 10px">Digite o PIN do evento</p>
@@ -89,26 +113,48 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
     <button class="p" id="go">Entrar</button>
   </section>
   <section id="album" hidden>
-    <div class="bar">
-      <button id="sf">Procurar com Selfie</button>
-      <button class="p" id="dl" disabled>Baixar</button>
-      <button id="sv" class="p" hidden></button>
-    </div>
+    <div class="bar"><button id="sv" class="p" hidden></button></div>
     <div id="pg" class="prog" hidden><span id="pt"></span> <button id="pc" style="min-height:32px">Cancelar</button><i id="pb"></i></div>
     <div id="fl" class="mute" hidden></div>
     <div class="g" id="gr"></div>
-    <p class="mute" style="text-align:center;padding:18px 8px 0">Dúvidas ou pedido de remoção de foto?<br><a id="igf" target="_blank" rel="noopener">Fale com a NiceShot no Instagram @niceshot.pt</a></p>
   </section>
+<section id="adm" hidden>
+  <div class="row" style="margin:0 0 6px"><button class="primary" id="x-new" style="flex:1">Novo evento</button><button id="x-cfg">Configurar</button></div>
+  <div class="mute" id="x-ver"></div>
+  <div id="x-list"></div>
+<dialog id="x-dc"><form method="dialog">
+  <b>Conexão</b>
+  <label>Endereço do Worker</label><input type="text" id="x-cu" placeholder="https://niceshot-api.seu-nome.workers.dev" autocapitalize="off">
+  <label>Chave de admin</label><input type="password" id="x-ck" autocomplete="off">
+  <label>Pasta do Drive de todos os eventos (link ou ID)</label><input type="text" id="x-cf" autocapitalize="off">
+  <div class="row"><button class="primary" id="x-cs" value="ok">Salvar</button><button value="x">Cancelar</button></div>
+</form></dialog><dialog id="x-de"><form method="dialog">
+  <b id="x-et">Novo evento</b>
+  <label>Nome do evento</label><input type="text" id="x-n">
+  <label>Local</label><input type="text" id="x-pl" placeholder="ex.: Clube, cidade">
+  <label>Primeiro dia do evento (fotos a partir das 00:00)</label><input type="date" id="x-df">
+  <label>Último dia do evento (fotos até as 23:59)</label><input type="date" id="x-dt">
+  <label>PIN de acesso (4 dígitos; vazio = gerar automático)</label><input type="text" id="x-pn" inputmode="numeric" maxlength="4" autocomplete="off">
+  <label class="chk"><input type="checkbox" id="x-a" checked> Permitir baixar as fotos</label>
+  <label class="chk"><input type="checkbox" id="x-l" checked> Aparecer na lista inicial do app</label>
+  <div class="row"><button class="primary" id="x-es" value="ok">Salvar evento</button><button value="x">Cancelar</button></div>
+</form></dialog><dialog id="x-dp"><form method="dialog">
+  <b id="x-pt">Fotos</b> <span class="mute" id="x-pc"></span>
+  <p class="mute" style="margin:6px 0 0">Toque na foto para ocultá-la. Toque na estrela para definir a capa (dourada = capa atual; toque nela de novo para tirar). A data sob cada foto é a da captura; ⚠ indica foto sem data gravada.</p>
+  <div class="grid" id="x-pg"></div>
+  <div class="row"><button type="button" id="x-pr">Atualizar lista</button><button value="x">Fechar</button></div>
+</form></dialog>
+</section>
 </main>
+<section id="vw" hidden>
+  <img id="vi" alt="">
+  <div class="top"><span id="vn"></span><button class="v" id="vs" aria-label="Marcar para download"></button></div>
+  <button class="side l" id="pv" aria-label="Foto anterior">‹</button><button class="side r" id="nx" aria-label="Próxima foto">›</button>
+</section>
 <nav class="dock" id="hd"><button class="nv" id="hp" disabled aria-label="Evento anterior"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="p c" id="hv" disabled>Ver Fotos</button><button class="nv" id="hn" disabled aria-label="Próximo evento"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></nav>
-<nav class="dock" id="ad" hidden><button class="p c" id="zm" disabled>Ampliar foto</button></nav>
+<nav class="dock" id="ad" hidden><button id="sf"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Procurar com Selfie</span></button><button id="zm" disabled><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span>Ampliar foto</span></button><button id="dl" disabled><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Descarregar</span></button></nav>
 <input type="file" id="sfile" accept="image/*" capture="user" hidden>
 
-<div id="vw" hidden>
-  <img id="vi" alt="">
-  <div class="top"><button class="v" id="vc" aria-label="Fechar">✕</button><span id="vn"></span><button class="v" id="vs" aria-label="Marcar para download"></button></div>
-  <button class="side l" id="pv" aria-label="Foto anterior">‹</button><button class="side r" id="nx" aria-label="Próxima foto">›</button>
-</div>
 <div id="msg" role="status"></div>
 
 <script>
@@ -129,10 +175,13 @@ async function j(p, o) {
 }
 const post = (p, body) => j(p, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 const thumb = (p, s) => `${API}/api/thumb/${p.id}?s=${s}&k=${p.k}&token=${encodeURIComponent(S.tok)}`;
+const setZm = big => { $("#zm span").textContent = big ? "Ver Fotos pequenas" : "Ampliar foto"; };
+const updDl = () => { $("#dl").hidden = S.info?.allowDownload === false; $("#dl").disabled = !S.sel.size; $("#dl span").textContent = "Descarregar" + (S.sel.size ? ` (${S.sel.size})` : ""); };
 function show(id) {
-  for (const s of ["home", "pinbox", "album"]) $("#" + s).hidden = s !== id;
+  for (const s of ["home", "pinbox", "album", "adm"]) $("#" + s).hidden = s !== id;
+  $("#vw").hidden = true; $("main").hidden = false; setZm(false);
   $("#bk").hidden = id === "home"; $("#igh").hidden = id !== "home"; $("#hd").hidden = id !== "home"; $("#ad").hidden = id !== "album";
-  $("#ti").textContent = id === "album" && S.ev ? S.ev.name : "Photo Sharing";
+  $("#ti").textContent = id === "adm" ? "Admin" : id === "album" && S.ev ? S.ev.name : "Photo Sharing";
 }
 
 /* ---- tela inicial: carrossel de eventos ---- */
@@ -170,6 +219,141 @@ $("#hv").onclick = () => go(S.evs?.[slideN()]?.id);
 $("#hp").onclick = () => $("#car").scrollBy({ left: -$("#car").clientWidth, behavior: "smooth" });
 $("#hn").onclick = () => $("#car").scrollBy({ left: $("#car").clientWidth, behavior: "smooth" });
 $("#bk").onclick = home;
+const APP_VER = "1.1"; $("#appver").textContent = "v" + APP_VER;
+const Admin = (() => {
+
+const base = () => {
+  let u = (localStorage.getItem("ns_url") || "").trim().replace(/\/+$/, "");
+  if (u && !/^https?:\/\//i.test(u)) u = "https://" + u;
+  return u;
+};
+let events = [], editing = null, pvEv = null;
+
+
+async function api(path, opt = {}) {
+  const r = await fetch(base() + path, { ...opt, headers: { "Content-Type": "application/json", Authorization: "Bearer " + (localStorage.getItem("ns_key") || ""), ...(opt.headers || {}) } });
+  let b = {}; try { b = await r.json(); } catch {}
+  if (!r.ok) throw new Error(b.error || ("erro " + r.status));
+  return b;
+}
+const put = (id, body) => api("/api/admin/events/" + id, { method: "PUT", body: JSON.stringify(body) });
+
+const NEED = "2026-10-04-c"; // versão do Worker que esta página espera
+async function checkVer() {
+  try {
+    const v = await (await fetch(base() + "/api/health")).json();
+    $("#x-ver").textContent = v.build ? "· Worker " + v.build : "· Worker antigo ⚠";
+    if (v.build !== NEED) say("O Worker publicado está desatualizado. Cole o worker.js mais recente em Edit code e faça Deploy.");
+  } catch {}
+}
+async function load() {
+  if (!base()) { $("#x-dc").showModal(); return; }
+  checkVer();
+  try { events = await api("/api/admin/events"); drawEvents(); }
+  catch (e) { $("#x-list").innerHTML = `<p class="card">Não consegui carregar: ${esc(e.message)}. Confira o endereço e a chave em Configurar.</p>`; }
+}
+
+function drawEvents() {
+  $("#x-list").innerHTML = events.length ? events.map(ev => `
+    <div class="card ${ev.active ? "" : "off"}" data-id="${ev.id}">
+      <div class="top"><b>${esc(ev.name)}</b><span class="mute">${ev.active ? "No ar" : "Desativado"}</span></div>
+      <div class="pin">${esc(ev.pin)}</div>
+      <div class="mute">${esc(ev.date || "sem data")} · ${esc(daysText(ev))} · download ${ev.allowDownload === false ? "desligado" : "ligado"} · ${ev.cover ? "com capa" : "sem capa"}</div>
+      <div class="row">
+        <button data-a="photos">Fotos</button><button data-a="edit">Editar</button>
+        <button data-a="toggle">${ev.active ? "Desativar" : "Ativar"}</button>
+        <button data-a="del" class="danger">Apagar</button>
+      </div>
+    </div>`).join("") : `<p class="mute">Nenhum evento ainda. Toque em Novo evento.</p>`;
+}
+
+$("#x-list").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-a]"); if (!b) return;
+  const id = b.closest(".card").dataset.id, ev = events.find(x => x.id === id);
+  try {
+    if (b.dataset.a === "photos") return preview(ev);
+    if (b.dataset.a === "edit") return openForm(ev);
+    if (b.dataset.a === "toggle") await put(id, { active: !ev.active });
+    if (b.dataset.a === "del") { if (!confirm("Apagar o evento " + ev.name + "? As fotos no Drive não são apagadas.")) return; await api("/api/admin/events/" + id, { method: "DELETE" }); }
+    await load();
+  } catch (err) { say(err.message); }
+});
+
+const dmy = d => d ? d.split("-").reverse().join("/") : "";
+const daysText = ev => ev.dateFrom && ev.dateTo ? "dias " + dmy(ev.dateFrom) + " a " + dmy(ev.dateTo) : "SEM DATAS: lista a pasta toda, edite o evento";
+function openForm(ev) {
+  editing = ev || null;
+  $("#x-et").textContent = ev ? "Editar evento" : "Novo evento";
+  $("#x-n").value = ev?.name || "";
+  $("#x-df").value = ev?.dateFrom || ""; $("#x-dt").value = ev?.dateTo || "";
+  $("#x-a").checked = ev ? ev.allowDownload !== false : true;
+  $("#x-pn").value = ev?.pin || ""; $("#x-pl").value = ev?.place || "";
+  $("#x-l").checked = ev ? ev.listed !== false : true;
+  $("#x-de").showModal();
+}
+$("#x-new").onclick = () => openForm(null);
+$("#x-es").onclick = async e => {
+  e.preventDefault();
+  const body = { name: $("#x-n").value.trim(), date: $("#x-df").value, allowDownload: $("#x-a").checked, listed: $("#x-l").checked, place: $("#x-pl").value.trim(), dateFrom: $("#x-df").value, dateTo: $("#x-dt").value };
+  const pin = $("#x-pn").value.trim();
+  if (pin) body.pin = pin;
+  if (pin && !/^\d{4}$/.test(pin)) return say("O PIN precisa ter 4 dígitos.");
+  if (!body.name) return say("Preencha o nome do evento.");
+  if (!body.dateFrom || !body.dateTo) return say("Informe o primeiro e o último dia do evento.");
+  if (body.dateFrom > body.dateTo) return say("O último dia não pode ser antes do primeiro.");
+  const dias = Math.round((new Date(body.dateTo) - new Date(body.dateFrom)) / 864e5) + 1;
+  if (dias > 31 && !confirm("O período tem " + dias + " dias e vai listar todas as fotos desse intervalo. Confirma?")) return;
+  try {
+    if (editing) await put(editing.id, body); else await api("/api/admin/events", { method: "POST", body: JSON.stringify(body) });
+    $("#x-de").close(); say("Evento salvo."); await load();
+  } catch (err) { say(err.message); }
+};
+
+async function preview(ev) {
+  pvEv = ev;
+  $("#x-pt").textContent = ev.name; $("#x-pc").textContent = "carregando…"; $("#x-pg").innerHTML = ""; $("#x-dp").showModal();
+  try {
+    const { token } = await fetch(base() + "/api/access", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin: ev.pin }) }).then(async r => { const b = await r.json(); if (!r.ok) throw new Error(b.error || r.status); return b; });
+    const { photos, event } = await fetch(base() + "/api/photos?token=" + encodeURIComponent(token)).then(async r => { const b = await r.json(); if (!r.ok) throw new Error(b.error || r.status); return b; });
+    $("#x-pc").textContent = photos.length + " fotos · " + (event && event.dateFrom && event.dateTo ? "filtro " + dmy(event.dateFrom) + " a " + dmy(event.dateTo) : "SEM FILTRO DE DATAS");
+    $("#x-pg").innerHTML = photos.length ? photos.map(p => `<div data-f="${p.id}"><button type="button" class="st${p.id === ev.cover ? " on" : ""}" data-s="${p.id}" aria-label="Definir como capa">${p.id === ev.cover ? "★" : "☆"}</button><img loading="lazy" alt="${esc(p.name)}" src="${base()}/api/thumb/${p.id}?s=400&k=${p.k}&token=${encodeURIComponent(token)}"><span title="${esc(p.name)}">${p.exif ? "" : "⚠ "}${esc((p.takenAt || "").slice(0, 16).replace("T", " "))}</span></div>`).join("") : `<p class="mute">Nenhuma foto encontrada com esse prefixo e número inicial. Confira a pasta e o compartilhamento no Drive.</p>`;
+    $("#x-pg").onclick = async e => {
+      const s = e.target.closest("[data-s]");
+      if (s) {
+        const next = ev.cover === s.dataset.s ? "" : s.dataset.s;
+        try {
+          await put(ev.id, { cover: next }); ev.cover = next; say(next ? "Capa definida." : "Capa removida.");
+          document.querySelectorAll("#x-pg .st").forEach(b => { const on = b.dataset.s === ev.cover; b.classList.toggle("on", on); b.textContent = on ? "★" : "☆"; });
+        } catch (err) { say(err.message); }
+        return;
+      }
+      const d = e.target.closest("[data-f]"); if (!d || !confirm("Ocultar esta foto do álbum?")) return;
+      try { await put(ev.id, { hideFile: d.dataset.f }); d.remove(); say("Foto oculta."); } catch (err) { say(err.message); }
+    };
+  } catch (err) { $("#x-pc").textContent = ""; $("#x-pg").innerHTML = `<p class="mute">${esc(err.message)}</p>`; }
+}
+
+$("#x-cfg").onclick = () => {
+  $("#x-cu").value = base(); $("#x-ck").value = localStorage.getItem("ns_key") || ""; $("#x-cf").value = ""; $("#x-dc").showModal();
+  if (base()) api("/api/admin/settings").then(s => { $("#x-cf").value = s.folderId || ""; }).catch(() => {});
+};
+$("#x-cs").onclick = async e => {
+  e.preventDefault(); localStorage.setItem("ns_url", $("#x-cu").value.trim()); localStorage.setItem("ns_key", $("#x-ck").value);
+  const f = $("#x-cf").value.trim();
+  if (f) { try { await api("/api/admin/settings", { method: "PUT", body: JSON.stringify({ folderId: f }) }); say("Pasta do Drive salva."); } catch (err) { say(err.message); } }
+  $("#x-dc").close(); load();
+};
+$("#x-pr").onclick = async () => {
+  if (!pvEv) return;
+  try { await put(pvEv.id, {}); await preview(pvEv); say("Lista atualizada."); } catch (err) { say(err.message); }
+};
+$("#x-df").onchange = () => { if (!$("#x-dt").value || $("#x-dt").value < $("#x-df").value) $("#x-dt").value = $("#x-df").value; };
+return { open: load };
+})();
+function openAdmin() { show("adm"); Admin.open(); }
+let vt = 0, vtm; // 5 toques seguidos na versão abrem o admin
+$("#appver").onclick = () => { clearTimeout(vtm); if (++vt >= 5) { vt = 0; return openAdmin(); } vtm = setTimeout(() => vt = 0, 2500); };
+
 
 /* ---- PIN ---- */
 async function enter() {
@@ -199,7 +383,7 @@ function draw() {
   const list = view(), canDl = S.info?.allowDownload !== false;
   if (!list.some(p => p.id === S.cur)) S.cur = null; $("#zm").disabled = !S.cur;
   $("#gr").innerHTML = list.length ? list.map((p, i) => `<div class="t ${S.sel.has(p.id) ? "on" : ""} ${p.id === S.cur ? "cur" : ""}" data-i="${i}" data-id="${p.id}"><img loading="lazy" alt="" src="${thumb(p, 400)}">${canDl ? `<button class="k" aria-label="Selecionar">${S.sel.has(p.id) ? "✓" : ""}</button>` : ""}</div>`).join("") : `<p class="mute" style="padding:10px 0">${waitMsg()}</p>`;
-  $("#dl").hidden = !canDl; $("#dl").disabled = !S.sel.size; $("#dl").textContent = "Baixar" + (S.sel.size ? ` (${S.sel.size})` : "");
+  updDl();
   const f = $("#fl"); f.hidden = !S.mine;
   if (S.mine) f.innerHTML = `${list.length} foto(s) com você. <button id="all" style="min-height:32px">Mostrar todas</button>`;
 }
@@ -214,22 +398,22 @@ $("#gr").onclick = e => {
   if (e.target.closest(".k")) { toggleSel(id); return draw(); }
   S.cur = id; document.querySelectorAll("#gr .t").forEach(x => x.classList.toggle("cur", x.dataset.id === id)); $("#zm").disabled = false;
 };
-$("#zm").onclick = () => { S.idx = view().findIndex(p => p.id === S.cur); if (S.idx >= 0) openViewer(); };
+$("#zm").onclick = () => { if (!$("#vw").hidden) return closeViewer(); S.idx = view().findIndex(p => p.id === S.cur); if (S.idx >= 0) openViewer(); };
 $("#fl").onclick = e => { if (e.target.id === "all") { S.mine = null; draw(); } };
 
-/* ---- visualizador (tela cheia) ---- */
+/* ---- fotos grandes, uma a uma (a barra inferior continua) ---- */
+function vsync() { const p = view()[S.idx]; if (!p) return; const on = S.sel.has(p.id); $("#vs").hidden = S.info?.allowDownload === false; $("#vs").textContent = on ? "✓" : ""; $("#vs").classList.toggle("on", on); }
 function openViewer() {
   const list = view(), p = list[S.idx]; if (!p) return;
-  $("#vi").src = thumb(p, 1600); $("#vn").textContent = `${S.idx + 1} de ${list.length}`;
-  $("#pv").disabled = S.idx === 0; $("#nx").disabled = S.idx >= list.length - 1;
-  const on = S.sel.has(p.id); $("#vs").hidden = S.info?.allowDownload === false; $("#vs").textContent = on ? "✓" : ""; $("#vs").classList.toggle("on", on);
+  S.cur = p.id; $("#vi").src = thumb(p, 1600); $("#vn").textContent = `${S.idx + 1} de ${list.length}`;
+  $("#pv").disabled = S.idx === 0; $("#nx").disabled = S.idx >= list.length - 1; vsync();
   for (const q of [list[S.idx + 1], list[S.idx - 1]]) if (q) new Image().src = thumb(q, 1600);
-  $("#vw").hidden = false;
+  $("main").hidden = true; $("#vw").hidden = false; setZm(true); $("#zm").disabled = false;
 }
 const step = d => { const n = S.idx + d; if (n >= 0 && n < view().length) { S.idx = n; openViewer(); } };
-function closeViewer() { $("#vw").hidden = true; S.cur = view()[S.idx]?.id || S.cur; draw(); document.querySelector("#gr .t.cur")?.scrollIntoView({ block: "center" }); }
-$("#pv").onclick = () => step(-1); $("#nx").onclick = () => step(1); $("#vc").onclick = closeViewer;
-$("#vs").onclick = () => { const p = view()[S.idx]; if (p && toggleSel(p.id)) openViewer(); };
+function closeViewer() { $("#vw").hidden = true; $("main").hidden = false; setZm(false); S.cur = view()[S.idx]?.id || S.cur; draw(); document.querySelector("#gr .t.cur")?.scrollIntoView({ block: "center" }); }
+$("#pv").onclick = () => step(-1); $("#nx").onclick = () => step(1);
+$("#vs").onclick = () => { const p = view()[S.idx]; if (p && toggleSel(p.id)) { vsync(); updDl(); } };
 let tx = null;
 $("#vw").addEventListener("touchstart", e => { tx = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
 $("#vw").addEventListener("touchend", e => { if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(dx) > 60) step(dx < 0 ? 1 : -1); }, { passive: true });
@@ -244,10 +428,10 @@ $("#dl").onclick = async () => {
       if (!r.ok) { let b = {}; try { b = await r.json(); } catch {} throw new Error(b.error || "falha no download"); }
       const b = await r.blob(); files.push(new File([b], p.name, { type: b.type || "image/jpeg" }));
     }
-    if (IOS && navigator.canShare?.({ files })) { S.files = files; $("#sv").textContent = `Salvar ${files.length} foto(s) na galeria`; $("#sv").hidden = false; say("Pronto! Toque em Salvar na galeria."); }
+    if (IOS && navigator.canShare?.({ files })) { if (!$("#vw").hidden) closeViewer(); S.files = files; $("#sv").textContent = `Salvar ${files.length} foto(s) na galeria`; $("#sv").hidden = false; say("Pronto! Toque em Salvar na galeria."); }
     else { for (const f of files) { const a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; a.click(); await new Promise(r => setTimeout(r, 500)); URL.revokeObjectURL(a.href); } say("Fotos baixadas."); S.sel.clear(); }
   } catch (e) { say(e.message); }
-  draw();
+  draw(); if (!$("#vw").hidden) vsync();
 };
 $("#sv").onclick = async () => {
   try { await navigator.share({ files: S.files }); S.sel.clear(); $("#sv").hidden = true; draw(); }
@@ -264,7 +448,7 @@ const loadFace = () => faceReady ||= (async () => {
 const img = (src, cors) => new Promise((ok, no) => { const i = new Image(); if (cors) i.crossOrigin = "anonymous"; i.onload = () => ok(i); i.onerror = no; i.src = src; });
 const prog = (t, pct) => { $("#pg").hidden = pct < 0; $("#pt").textContent = t; $("#pb").style.width = Math.max(pct, 0) + "%"; };
 
-$("#sf").onclick = () => { if (confirm("Vamos comparar a sua selfie com as fotos do evento. A selfie fica só no seu aparelho e não é enviada. Continuar?")) $("#sfile").click(); };
+$("#sf").onclick = () => { if (confirm("Vamos comparar a sua selfie com as fotos do evento. A selfie fica só no seu aparelho e não é enviada. Continuar?")) { if (!$("#vw").hidden) closeViewer(); $("#sfile").click(); } };
 $("#pc").onclick = () => { S.run++; prog("", -1); };
 $("#sfile").onchange = async e => {
   const file = e.target.files[0]; e.target.value = ""; if (!file) return;
@@ -289,7 +473,7 @@ $("#sfile").onchange = async e => {
   } catch (err) { prog("", -1); say(err.message || "Não foi possível comparar as fotos."); }
 };
 
-$("#igf").href = IG; $("#igh").href = IG;
+$("#igh").href = IG;
 home();
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 </script>
