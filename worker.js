@@ -6,7 +6,7 @@
 //   Secrets: GOOGLE_API_KEY, ADMIN_KEY, TOKEN_SECRET
 //   Var:     ALLOWED_ORIGIN (ex.: https://niceshot.meudominio.com — vários separados por vírgula)
 
-const BUILD = "2026-10-04-c"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
+const BUILD = "2026-10-05-a"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
 const DRIVE = "https://www.googleapis.com/drive/v3";
 const TOKEN_TTL = 60 * 60 * 24 * 3; // sessão do visitante: 3 dias
 const LIST_TTL = 60; // cache da listagem de fotos (segundos)
@@ -33,7 +33,7 @@ export default {
       if (e instanceof HttpError) res = json({ error: e.message }, e.status);
       else {
         console.error(e);
-        res = json({ error: "erro interno" }, 500);
+        res = json({ error: "Internal error" }, 500);
       }
     }
     // reembrulha para tornar os headers mutáveis (respostas de fetch/cache são imutáveis)
@@ -55,7 +55,7 @@ async function route(req, env, ctx, url) {
   if ((r = p.match(/^\/api\/thumb\/([\w-]+)$/)) && m === "GET") return thumb(env, ctx, url, r[1]);
   if ((r = p.match(/^\/api\/download\/([\w-]+)$/)) && m === "GET") return download(env, url, r[1]);
   if (p.startsWith("/api/admin/")) return admin(req, env, p, m);
-  throw new HttpError(404, "não encontrado");
+  throw new HttpError(404, "not found");
 }
 
 /* ------------------------------ público ------------------------------ */
@@ -72,9 +72,9 @@ async function access(req, env) {
   await limit(req, "pin", 10, 60);
   const { pin, eventId: wanted } = await readJson(req);
   const eventId = await env.EVENTS.get(`pin:${String(pin || "").toUpperCase().trim()}`);
-  if (!eventId || (wanted && wanted !== eventId)) throw new HttpError(401, "PIN inválido");
+  if (!eventId || (wanted && wanted !== eventId)) throw new HttpError(401, "Invalid PIN");
   const ev = await getEvent(env, eventId);
-  if (!ev || !ev.active) throw new HttpError(403, "álbum indisponível");
+  if (!ev || !ev.active) throw new HttpError(403, "Album unavailable");
   return json({ token: await makeToken(env, ev.id), event: publicEvent(ev) });
 }
 
@@ -94,7 +94,7 @@ async function thumb(env, ctx, url, fileId) {
 // Capa pública do evento (a foto escolhida no admin): não exige PIN.
 async function cover(env, ctx, url, eventId) {
   const ev = await getEvent(env, eventId);
-  if (!ev || !ev.active || ev.listed === false || !ev.cover) throw new HttpError(404, "sem capa");
+  if (!ev || !ev.active || ev.listed === false || !ev.cover) throw new HttpError(404, "No cover");
   return thumbResponse(env, ctx, ev.cover, thumbSize(url));
 }
 
@@ -109,11 +109,11 @@ async function thumbResponse(env, ctx, fileId, size) {
   let res = await cache.match(key);
   if (!res) {
     const meta = await fetch(`${DRIVE}/files/${fileId}?fields=thumbnailLink&key=${env.GOOGLE_API_KEY}`);
-    if (!meta.ok) throw new HttpError(502, "miniatura indisponível");
+    if (!meta.ok) throw new HttpError(502, "Thumbnail unavailable");
     const { thumbnailLink } = await meta.json();
-    if (!thumbnailLink) throw new HttpError(404, "sem miniatura");
+    if (!thumbnailLink) throw new HttpError(404, "No thumbnail");
     const img = await fetch(thumbnailLink.replace(/=s\d+$/, `=s${size}`));
-    if (!img.ok) throw new HttpError(502, "miniatura indisponível");
+    if (!img.ok) throw new HttpError(502, "Thumbnail unavailable");
     res = new Response(img.body, {
       headers: {
         "Content-Type": img.headers.get("Content-Type") || "image/jpeg",
@@ -127,14 +127,14 @@ async function thumbResponse(env, ctx, fileId, size) {
 
 async function download(env, url, fileId) {
   const ev = await eventFromToken(env, url.searchParams.get("token"));
-  if (ev.allowDownload === false) throw new HttpError(403, "download desativado neste álbum");
+  if (ev.allowDownload === false) throw new HttpError(403, "Downloads are disabled for this album");
   await checkPhoto(env, ev, fileId, url.searchParams.get("k"));
   const meta = await fetch(`${DRIVE}/files/${fileId}?fields=name&key=${env.GOOGLE_API_KEY}`);
   const name = meta.ok ? (await meta.json()).name || `${fileId}.jpg` : `${fileId}.jpg`;
   const up = await fetch(`${DRIVE}/files/${fileId}?alt=media&key=${env.GOOGLE_API_KEY}`);
   if (!up.ok) {
     // 403 do Drive costuma ser cota por arquivo/minuto: peça para tentar de novo
-    throw new HttpError(up.status === 403 ? 429 : 502, "arquivo indisponível agora, tente novamente em instantes");
+    throw new HttpError(up.status === 403 ? 429 : 502, "File unavailable right now, please try again shortly");
   }
   const h = new Headers({
     "Content-Type": up.headers.get("Content-Type") || "image/jpeg",
@@ -235,7 +235,7 @@ async function admin(req, env, p, m) {
     return json(s);
   }
 
-  throw new HttpError(404, "não encontrado");
+  throw new HttpError(404, "not found");
 }
 
 /* ------------------------- eventos e fotos --------------------------- */
@@ -259,7 +259,7 @@ function publicEvent(ev) {
 async function eventFromToken(env, token) {
   const id = await readToken(env, token);
   const ev = await getEvent(env, id);
-  if (!ev || !ev.active) throw new HttpError(403, "álbum indisponível");
+  if (!ev || !ev.active) throw new HttpError(403, "Album unavailable");
   return ev;
 }
 
@@ -269,13 +269,13 @@ async function photoKey(env, eventId, fileId) {
 }
 
 async function checkPhoto(env, ev, fileId, k) {
-  if ((ev.hidden || []).includes(fileId)) throw new HttpError(404, "foto não encontrada neste álbum");
-  if (!safeEqual(String(k || ""), await photoKey(env, ev.id, fileId))) throw new HttpError(403, "acesso negado a esta foto");
+  if ((ev.hidden || []).includes(fileId)) throw new HttpError(404, "Photo not found in this album");
+  if (!safeEqual(String(k || ""), await photoKey(env, ev.id, fileId))) throw new HttpError(403, "Access denied for this photo");
 }
 
 async function assertInEvent(env, ev, fileId) {
   const photo = (await listPhotos(env, ev)).find((x) => x.id === fileId);
-  if (!photo) throw new HttpError(404, "foto não encontrada neste álbum");
+  if (!photo) throw new HttpError(404, "Photo not found in this album");
   return photo;
 }
 
@@ -374,10 +374,10 @@ async function makeToken(env, eventId) {
 
 async function readToken(env, token) {
   const parts = String(token || "").split(".");
-  if (parts.length !== 3) throw new HttpError(401, "sessão inválida");
+  if (parts.length !== 3) throw new HttpError(401, "Invalid session");
   const [eventId, exp, sig] = parts;
-  if (!safeEqual(sig, await hmac(env.TOKEN_SECRET, `${eventId}.${exp}`))) throw new HttpError(401, "sessão inválida");
-  if (Number(exp) < Date.now() / 1000) throw new HttpError(401, "sessão expirada, digite o PIN novamente");
+  if (!safeEqual(sig, await hmac(env.TOKEN_SECRET, `${eventId}.${exp}`))) throw new HttpError(401, "Invalid session");
+  if (Number(exp) < Date.now() / 1000) throw new HttpError(401, "Session expired, please enter the PIN again");
   return eventId;
 }
 
@@ -404,7 +404,7 @@ async function limit(req, bucket, max, windowSec) {
   const key = new Request(`https://rl.local/${bucket}/${encodeURIComponent(ip)}`);
   const hit = await cache.match(key);
   const n = hit ? Number(await hit.text()) : 0;
-  if (n >= max) throw new HttpError(429, "muitas tentativas, aguarde um minuto");
+  if (n >= max) throw new HttpError(429, "Too many attempts, please wait a minute");
   await cache.put(key, new Response(String(n + 1), { headers: { "Cache-Control": `max-age=${windowSec}` } }));
 }
 
@@ -418,7 +418,7 @@ async function readJson(req) {
   try {
     return (await req.json()) || {};
   } catch {
-    throw new HttpError(400, "JSON inválido");
+    throw new HttpError(400, "Invalid JSON");
   }
 }
 

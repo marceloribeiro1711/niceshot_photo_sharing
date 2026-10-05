@@ -1,0 +1,17 @@
+{
+  // O "name" precisa ser igual ao nome do Worker no painel da Cloudflare.
+  "name": "niceshot-api",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-01",
+
+  // Armazenamento dos eventos e do PIN (o mesmo KV que você já criou).
+  "kv_namespaces": [
+    { "binding": "EVENTS", "id": "41f1e1266ff34f1cbe75920aad323df1" }
+  ],
+
+  // Endereço do app (GitHub Pages). Vários endereços: separe por vírgula.
+  "vars": { "ALLOWED_ORIGIN": "https://marceloribeiro1711.github.io" }
+
+  // As chaves GOOGLE_API_KEY, ADMIN_KEY e TOKEN_SECRET ficam só no painel
+  // (Settings > Variables and Secrets). Nunca coloque chaves neste arquivo.
+}
