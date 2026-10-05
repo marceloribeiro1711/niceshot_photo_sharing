@@ -287,7 +287,7 @@ function sortKeyOf(f) {
   return (f.createdTime || "").slice(0, 19);
 }
 
-// Lista as fotos do evento (pasta do Drive + filtros de prefixo/sequência), com cache de 60 s.
+// Lista as fotos do evento (pasta do Drive + filtro por dia do evento), com cache de 60 s.
 // A chave de cache inclui updatedAt: qualquer mudança no admin invalida na hora.
 async function listPhotos(env, ev) {
   const folderId = ev.folderId || (await getSettings(env)).folderId; // pasta própria do evento ou a global

@@ -162,6 +162,7 @@ const API = "https://niceshot-api.marceloribeiro1711.workers.dev"; // endereço 
 const IG = "https://www.instagram.com/niceshot.pt/"; // perfil da NiceShot
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ANDROID = /Android/.test(navigator.userAgent);
 const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const S = { ev: null, tok: "", photos: [], sel: new Set(), mine: null, idx: 0, run: 0, desc: new Map(), files: [] };
 
@@ -258,7 +259,7 @@ $("#hv").onclick = () => go(S.evs?.[slideN()]?.id);
 $("#hp").onclick = () => $("#car").scrollBy({ left: -$("#car").clientWidth, behavior: "smooth" });
 $("#hn").onclick = () => $("#car").scrollBy({ left: $("#car").clientWidth, behavior: "smooth" });
 $("#bk").onclick = home;
-const APP_VER = "1.4"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.5"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -343,6 +344,7 @@ $("#x-es").onclick = async e => {
   const dias = Math.round((new Date(body.dateTo) - new Date(body.dateFrom)) / 864e5) + 1;
   if (dias > 31 && !confirm("O período tem " + dias + " dias e vai listar todas as fotos desse intervalo. Confirma?")) return;
   try {
+    if (!editing && !(await api("/api/admin/settings")).folderId) return say("Defina a pasta do Drive em Configurar antes de criar um evento novo.");
     if (editing) await put(editing.id, body); else await api("/api/admin/events", { method: "POST", body: JSON.stringify(body) });
     $("#x-de").close(); say("Evento salvo."); await load();
   } catch (err) { say(err.message); }
@@ -478,7 +480,7 @@ $("#dl").onclick = async () => {
       if (!r.ok) { let b = {}; try { b = await r.json(); } catch {} throw new Error(srv(b.error) || tr("dl_fail")); }
       const b = await r.blob(); files.push(new File([b], p.name, { type: b.type || "image/jpeg" }));
     }
-    if (IOS && navigator.canShare?.({ files })) { if (!$("#vw").hidden) closeViewer(); S.files = files; $("#sv").textContent = tr("save_gallery", { n: files.length }); $("#sv").hidden = false; say(tr("done_tap")); }
+    if ((IOS || ANDROID) && navigator.canShare?.({ files })) { if (!$("#vw").hidden) closeViewer(); S.files = files; $("#sv").textContent = tr("save_gallery", { n: files.length }); $("#sv").hidden = false; say(tr("done_tap")); }
     else { for (const f of files) { const a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; a.click(); await new Promise(r => setTimeout(r, 500)); URL.revokeObjectURL(a.href); } say(tr("downloaded")); S.sel.clear(); }
   } catch (e) { say(e.message); }
   draw(); if (!$("#vw").hidden) vsync();
