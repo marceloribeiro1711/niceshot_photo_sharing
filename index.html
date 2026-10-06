@@ -98,17 +98,19 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 #adm .grid span{display:block;font-size:11px;color:var(--mute);text-align:center}
 #adm .cam{border:1px solid var(--line);border-radius:8px;padding:4px 12px 12px;margin-top:14px}#adm .rng{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #appver{align-self:flex-start;padding:6px 14px;min-height:32px;font-size:12px;color:var(--mute);user-select:none;-webkit-user-select:none}
-.pf{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
-.pfi{flex:none;width:72px;height:96px;border-radius:10px;background:var(--card);border:1px solid var(--line);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--mute)}
+.pfr{display:flex;gap:8px;align-items:flex-start;margin-top:8px}
+.pfc{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.pfi{width:100%;aspect-ratio:3/4;border-radius:10px;background:var(--card);border:1px solid var(--line);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--mute)}
 .pfi img{width:100%;height:100%;object-fit:cover}
-.pft{flex:1;min-width:0}.pft .mute{font-size:13px;margin:2px 0 8px}
-.row2{display:flex;gap:8px;flex-wrap:wrap}.pft button{min-height:40px;padding:0 12px}
-#pfg{border:0;border-radius:12px;padding:16px;width:min(340px,92vw);background:var(--card);color:var(--ink)}
-#pfg .row2{flex-wrap:nowrap;margin-top:14px}#pfg button{flex:1}
+.pfc button{width:100%;min-height:44px;padding:4px 6px;font-size:13px;line-height:1.15}
+#hd{gap:4px;padding:6px 8px}
+#hd .tb{flex:1;min-width:0;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px 2px;border:0;background:none;color:var(--ink);font-size:12px;line-height:1.15}
+#hd .tb:disabled{opacity:.45}
+#hd .tb svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 </style>
 </head>
 <body>
-<header><button id="bk" hidden data-ta="back">←</button><button id="pfb" data-ta="profile" style="width:44px;padding:0;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></button><h1 id="ti">Photo Sharing</h1><a class="hb" id="igh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/></svg><span data-t="contact"></span></a></header>
+<header><button id="bk" hidden data-ta="back">←</button><h1 id="ti">Photo Sharing</h1><a class="hb" id="igh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/></svg><span data-t="contact"></span></a></header>
 <main>
   <section id="home"><div id="car"></div><div id="dots"></div><div id="appver"></div></section>
   <section id="pinbox" hidden>
@@ -124,10 +126,8 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
     <div class="g" id="gr"></div>
   </section>
 <section id="prof" hidden>
-  <h2 style="margin:6px 0 4px;font-size:22px" data-t="pf_title"></h2><p class="mute" data-t="pf_intro" style="margin:0 0 6px"></p>
-  <p id="pfe" style="color:var(--red);margin:8px 0 0;font-size:14px"></p>
-  <div id="pfl"></div><p class="mute" id="pfn" style="text-align:center"></p>
-  <button id="pfc" data-t="clear_all" hidden style="display:block;margin:6px auto 20px"></button>
+  <div id="pfl" class="pfr"></div>
+  <p id="pfe" style="color:var(--red);margin:12px 0 0;font-size:14px;text-align:center"></p>
 </section>
 <section id="adm" hidden>
 <div id="x-body" hidden>
@@ -164,12 +164,10 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
   <div class="top"><span id="vn"></span><button class="v" id="vs" data-ta="sel_dl"></button></div>
   <button class="side l" id="pv" data-ta="prev_photo">‹</button><button class="side r" id="nx" data-ta="next_photo">›</button>
 </section>
-<nav class="dock" id="hd"><button class="nv" id="hp" disabled data-ta="prev_ev"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="p c" id="hv" disabled data-t="view_photos"></button><button class="nv" id="hn" disabled data-ta="next_ev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></nav>
+<nav class="dock" id="hd"><button class="nv" id="hp" disabled data-ta="prev_ev"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="tb" id="hv" disabled><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span data-t="view_photos"></span></button><button class="tb" id="pfb"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="my_selfie"></span></button><button class="nv" id="hn" disabled data-ta="next_ev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></nav>
 <nav class="dock" id="ad" hidden><button id="sf"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="selfie"></span></button><button id="zm"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span></span></button><button id="dl" disabled><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span></span></button></nav>
 <input type="file" id="sfile" accept="image/*" capture="user" hidden>
 <input type="file" id="pffile" accept="image/*" capture="user" hidden>
-<input type="file" id="pgfile" accept="image/*" hidden>
-<dialog id="pfg"><b id="pfg-t"></b><p id="pfg-p" class="mute" style="font-size:15px"></p><div class="row2"><button id="pfg-c" data-t="cancel"></button><button class="p" id="pfg-o" data-t="open_cam"></button></div></dialog>
 
 <div id="msg" role="status"></div>
 
@@ -215,27 +213,14 @@ const DICT = {
   e_many: ["Too many attempts, wait a minute", "Muitas tentativas, aguarde um minuto", "Demasiados intentos, espera un minuto", "Trop de tentatives, patientez une minute"],
   e_unavail: ["Album unavailable", "Álbum indisponível", "Álbum no disponible", "Album indisponible"], e_pin: ["Invalid PIN", "PIN inválido", "PIN no válido", "Code PIN invalide"],
   e_nodl: ["Downloads are disabled for this album", "Download desativado neste álbum", "Las descargas están desactivadas en este álbum", "Les téléchargements sont désactivés pour cet album"],
-  profile: ["Profile", "Perfil", "Perfil", "Profil"],
-  pf_title: ["Help us find your photos", "Ajude a encontrar suas fotos", "Ayúdanos a encontrar tus fotos", "Aidez-nous à retrouver vos photos"],
-  pf_intro: ["Add up to three selfies and up to three photos from your gallery. They are saved on this device and used when you search for your photos.", "Adicione até três selfies e até três fotos da sua galeria. Elas ficam guardadas neste aparelho e são usadas quando você procura suas fotos.", "Añade hasta tres selfies y hasta tres fotos de tu galería. Se guardan en este dispositivo y se usan cuando buscas tus fotos.", "Ajoutez jusqu'à trois selfies et trois photos de votre galerie. Elles sont enregistrées sur cet appareil et servent à retrouver vos photos."],
-  pf_gal_title: ["Photos from your gallery (optional)", "Fotos da sua galeria (opcional)", "Fotos de tu galería (opcional)", "Photos de votre galerie (facultatif)"],
-  pf_gal_intro: ["Good-quality photos where only the person you want to find appears help us find them more often.", "Fotos de boa qualidade em que apareça só a pessoa que você quer encontrar ajudam a encontrá-la com mais frequência.", "Las fotos de buena calidad en las que aparece solo la persona que quieres encontrar ayudan a encontrarla mejor.", "Des photos de bonne qualité où apparaît seulement la personne que vous voulez retrouver aident à la retrouver plus souvent."],
-  lib: ["Gallery photo", "Foto da galeria", "Foto de la galería", "Photo de la galerie"],
-  tip_lib: ["Pick a sharp, recent photo where only the person you want to find appears, in good light.", "Escolha uma foto nítida e recente em que apareça só a pessoa que você quer encontrar, com boa luz.", "Elige una foto nítida y reciente en la que aparezca solo la persona que quieres encontrar, con buena luz.", "Choisissez une photo nette et récente où apparaît seulement la personne que vous voulez retrouver, bien éclairée."],
-  choose: ["Choose photo", "Escolher foto", "Elegir foto", "Choisir une photo"], replace: ["Replace", "Trocar", "Cambiar", "Remplacer"],
-  front: ["Front", "Frente", "De frente", "De face"], left: ["Left profile", "Perfil esquerdo", "Perfil izquierdo", "Profil gauche"], right: ["Right profile", "Perfil direito", "Perfil derecho", "Profil droit"],
-  tip_front: ["Look straight at the camera with your face centered. Use good light and take off sunglasses and hat.", "Olhe direto para a câmera, com o rosto centralizado. Use boa luz e tire óculos escuros e boné.", "Mira a la cámara con la cara centrada. Usa buena luz y quítate gafas de sol y gorra.", "Regardez l'appareil, visage centré. Bonne lumière, sans lunettes de soleil ni casquette."],
-  tip_left: ["Turn your head so your left cheek faces the camera. Keep your whole face in the frame and well lit.", "Vire a cabeça para mostrar sua bochecha esquerda à câmera. Mantenha o rosto inteiro no quadro e bem iluminado.", "Gira la cabeza para mostrar tu mejilla izquierda a la cámara. Mantén toda la cara en el encuadre y bien iluminada.", "Tournez la tête pour montrer votre joue gauche à l'appareil. Gardez tout le visage dans le cadre, bien éclairé."],
-  tip_right: ["Turn your head so your right cheek faces the camera. Keep your whole face in the frame and well lit.", "Vire a cabeça para mostrar sua bochecha direita à câmera. Mantenha o rosto inteiro no quadro e bem iluminado.", "Gira la cabeza para mostrar tu mejilla derecha a la cámara. Mantén toda la cara en el encuadre y bien iluminada.", "Tournez la tête pour montrer votre joue droite à l'appareil. Gardez tout le visage dans le cadre, bien éclairé."],
-  take: ["Take selfie", "Tirar selfie", "Hacer selfie", "Prendre un selfie"], retake: ["Retake", "Tirar outra", "Repetir", "Reprendre"], remove: ["Remove", "Remover", "Quitar", "Supprimer"],
-  open_cam: ["Open camera", "Abrir câmera", "Abrir cámara", "Ouvrir l'appareil photo"], added_n: ["{n} of 6 photos added", "{n} de 6 fotos adicionadas", "{n} de 6 fotos añadidas", "{n} photo(s) sur 6 ajoutée(s)"],
+  my_selfie: ["My Selfie", "Minha Selfie", "Mi selfie", "Mon selfie"],
+  front: ["Front Selfie", "Selfie de Frente", "Selfie de frente", "Selfie de face"],
+  left: ["Left Profile Selfie", "Selfie Perfil Esquerdo", "Selfie perfil izquierdo", "Selfie profil gauche"],
+  right: ["Right Profile Selfie", "Selfie Perfil Direito", "Selfie perfil derecho", "Selfie profil droit"],
   pf_err: ["Couldn't save the selfie.", "Não consegui guardar a selfie.", "No se pudo guardar la selfie.", "Impossible d'enregistrer le selfie."],
   pf_check: ["Checking your photo…", "Verificando a sua foto…", "Comprobando tu foto…", "Vérification de votre photo…"],
   pf_multi: ["More than one person appears in this photo. Use a photo where only the person you want to find appears.", "Há mais de uma pessoa nesta foto. Use uma foto em que apareça só a pessoa que você quer encontrar.", "Aparece más de una persona en esta foto. Usa una foto en la que aparezca solo la persona que quieres encontrar.", "Plusieurs personnes apparaissent sur cette photo. Utilisez une photo où apparaît seulement la personne que vous voulez retrouver."],
   pf_none: ["We couldn't find a face in this photo. Try again with your face fully visible.", "Não encontramos um rosto nesta foto. Tente de novo com o rosto bem visível.", "No encontramos una cara en esta foto. Inténtalo de nuevo con la cara bien visible.", "Aucun visage trouvé sur cette photo. Réessayez avec le visage bien visible."],
-  pf_diff: ["This photo doesn't seem to show the same person as your other photos. To search for someone else, clear all photos first.", "Esta foto não parece ser da mesma pessoa das suas outras fotos. Para procurar outra pessoa, limpe todas as fotos primeiro.", "Esta foto no parece ser de la misma persona que tus otras fotos. Para buscar a otra persona, borra primero todas las fotos.", "Cette photo ne semble pas montrer la même personne que vos autres photos. Pour chercher quelqu'un d'autre, supprimez d'abord toutes les photos."],
-  clear_all: ["Clear all photos", "Limpar todas as fotos", "Borrar todas las fotos", "Supprimer toutes les photos"],
-  clear_ask: ["Remove all your profile photos from this device?", "Remover todas as fotos do perfil deste aparelho?", "¿Quitar todas las fotos del perfil de este dispositivo?", "Supprimer toutes les photos du profil de cet appareil ?"],
   e_file: ["File unavailable right now, try again shortly", "Arquivo indisponível agora, tente novamente em instantes", "Archivo no disponible ahora, inténtalo en un momento", "Fichier indisponible, réessayez dans un instant"]
 };
 const tr = (k, v = {}) => { let x = DICT[k][LI]; for (const n in v) x = x.replace("{" + n + "}", v[n]); return x; };
@@ -256,8 +241,8 @@ const updDl = () => { $("#dl").hidden = S.info?.allowDownload === false; $("#dl"
 function show(id) {
   for (const s of ["home", "pinbox", "album", "adm", "prof"]) $("#" + s).hidden = s !== id;
   $("#vw").hidden = true; $("main").hidden = false; setZm(false);
-  $("#bk").hidden = id === "home"; $("#pfb").hidden = id !== "home"; $("#igh").hidden = id !== "home"; $("#hd").hidden = id !== "home"; $("#ad").hidden = id !== "album";
-  $("#ti").textContent = id === "adm" ? "Admin" : id === "prof" ? tr("profile") : id === "album" && S.ev ? S.ev.name : "Photo Sharing";
+  $("#bk").hidden = id === "home"; $("#igh").hidden = id !== "home"; $("#hd").hidden = id !== "home"; $("#ad").hidden = id !== "album";
+  $("#ti").textContent = id === "adm" ? "Admin" : id === "prof" ? tr("my_selfie") : id === "album" && S.ev ? S.ev.name : "Photo Sharing";
 }
 
 /* ---- tela inicial: carrossel de eventos ---- */
@@ -295,7 +280,7 @@ $("#hv").onclick = () => go(S.evs?.[slideN()]?.id);
 $("#hp").onclick = () => $("#car").scrollBy({ left: -$("#car").clientWidth, behavior: "smooth" });
 $("#hn").onclick = () => $("#car").scrollBy({ left: $("#car").clientWidth, behavior: "smooth" });
 $("#bk").onclick = home;
-const SLOTS = ["front", "left", "right", "lib1", "lib2", "lib3"]; let pfSlot = null, pfUrls = [];
+const SLOTS = ["left", "front", "right"]; let pfSlot = null, pfUrls = [];
 const pdb = () => new Promise((ok, no) => { const r = indexedDB.open("ns_profile", 1); r.onupgradeneeded = () => r.result.createObjectStore("s"); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
 const pget = async k => { const d = await pdb(); return new Promise((ok, no) => { const q = d.transaction("s").objectStore("s").get(k); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); }); };
 const pput = async (k, v) => { const d = await pdb(); return new Promise((ok, no) => { const t = d.transaction("s", "readwrite"); if (v === null) t.objectStore("s").delete(k); else t.objectStore("s").put(v, k); t.oncomplete = ok; t.onerror = () => no(t.error); }); };
@@ -303,21 +288,13 @@ const shrink = (file, max = 1024) => new Promise((ok, no) => { const u = URL.cre
 async function drawProfile() {
   pfUrls.forEach(u => URL.revokeObjectURL(u)); pfUrls = []; let n = 0, h = "";
   for (const k of SLOTS) {
-    const lib = k.startsWith("lib"), b = await pget(k), u = b ? URL.createObjectURL(b) : ""; if (b) { n++; pfUrls.push(u); }
-    if (k === "lib1") h += `<h3 style="margin:20px 0 2px;font-size:17px">${tr("pf_gal_title")}</h3><p class="mute" style="margin:0">${tr("pf_gal_intro")}</p>`;
-    h += `<div class="pf"><div class="pfi">${u ? `<img src="${u}" alt="">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="40" height="40"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>'}</div><div class="pft"><b>${lib ? tr("lib") + " " + k.slice(3) : tr(k)}</b><div class="mute">${tr(lib ? "tip_lib" : "tip_" + k)}</div><div class="row2"><button class="p" data-s="${k}" data-a="take">${tr(lib ? (b ? "replace" : "choose") : (b ? "retake" : "take"))}</button>${b ? `<button data-s="${k}" data-a="del">${tr("remove")}</button>` : ""}</div></div></div>`;
+    const b = await pget(k), u = b ? URL.createObjectURL(b) : ""; if (b) { n++; pfUrls.push(u); }
+    h += `<div class="pfc"><div class="pfi">${u ? `<img src="${u}" alt="">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="40" height="40"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>'}</div><button class="p" data-s="${k}">${tr(k)}</button></div>`;
   }
-  $("#pfl").innerHTML = h; $("#pfn").textContent = tr("added_n", { n }); $("#pfc").hidden = n === 0;
+  $("#pfl").innerHTML = h;
 }
-$("#pfb").onclick = () => { show("prof"); drawProfile(); };
-$("#pfl").onclick = e => {
-  const b = e.target.closest("button"); if (!b) return; pfSlot = b.dataset.s;
-  if (b.dataset.a === "del") $("#pfe").textContent = ""; return pput(pfSlot, null).then(() => pput("d_" + pfSlot, null)).then(drawProfile);
-  const lib = pfSlot.startsWith("lib"); $("#pfg-t").textContent = lib ? tr("lib") + " " + pfSlot.slice(3) : tr(pfSlot); $("#pfg-p").textContent = tr(lib ? "tip_lib" : "tip_" + pfSlot); $("#pfg-o").textContent = tr(lib ? "choose" : "open_cam"); $("#pfg").showModal();
-};
-$("#pfc").onclick = async () => { if (!confirm(tr("clear_ask"))) return; for (const k of SLOTS) { await pput(k, null); await pput("d_" + k, null); } $("#pfe").textContent = ""; drawProfile(); };
-$("#pfg-c").onclick = () => $("#pfg").close();
-$("#pfg-o").onclick = () => { $("#pfg").close(); $(pfSlot.startsWith("lib") ? "#pgfile" : "#pffile").click(); };
+$("#pfb").onclick = () => { $("#pfe").textContent = ""; show("prof"); drawProfile(); };
+$("#pfl").onclick = e => { const b = e.target.closest("button"); if (!b) return; pfSlot = b.dataset.s; $("#pfe").textContent = ""; $("#pffile").click(); };
 async function pfCheck(blob, slot) { // confere a foto no próprio aparelho; devolve a chave do erro ou null
   let res;
   try {
@@ -330,9 +307,6 @@ async function pfCheck(blob, slot) { // confere a foto no próprio aparelho; dev
   if (!res.length) return side ? null : "pf_none"; // perfis laterais nem sempre são detectados: não bloqueia
   if (res.length > 1 && area(res[1]) >= 0.3 * area(res[0])) return "pf_multi";
   if (!side) {
-    const others = [];
-    for (const k of ["front", "lib1", "lib2", "lib3"]) if (k !== slot && await pget(k)) { const d = await pget("d_" + k); if (d) others.push(d); }
-    if (others.length && Math.min(...others.map(d => faceapi.euclideanDistance(d, res[0].descriptor))) > 0.8) return "pf_diff";
     await pput("d_" + slot, Array.from(res[0].descriptor));
   }
   return null;
@@ -340,14 +314,14 @@ async function pfCheck(blob, slot) { // confere a foto no próprio aparelho; dev
 const pfGot = async e => {
   const f = e.target.files[0]; e.target.value = ""; if (!f || !pfSlot) return; $("#pfe").textContent = "";
   try {
-    const blob = await shrink(f, pfSlot.startsWith("lib") ? 1600 : 1024), bad = await pfCheck(blob, pfSlot);
+    const blob = await shrink(f, 1024), bad = await pfCheck(blob, pfSlot);
     if (bad) { $("#pfe").textContent = tr(bad); return; }
     await pput(pfSlot, blob);
   } catch { say(tr("pf_err")); }
   drawProfile();
 };
-$("#pffile").onchange = pfGot; $("#pgfile").onchange = pfGot;
-const APP_VER = "1.11"; $("#appver").textContent = "v" + APP_VER;
+$("#pffile").onchange = pfGot;
+const APP_VER = "1.14"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {

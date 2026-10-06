@@ -1,6 +1,6 @@
 // NiceShot: service worker. Guarda só a "casca" do app para abrir offline.
 // A API (Worker) e as fotos nunca são guardadas aqui. Ao mudar arquivos do app, aumente o número em V.
-const V = "niceshot-v13";
+const V = "niceshot-v16";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", e => {
