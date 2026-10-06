@@ -103,6 +103,10 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 .pfi{width:100%;aspect-ratio:3/4;border-radius:10px;background:var(--card);border:1px solid var(--line);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--mute)}
 .pfi img{width:100%;height:100%;object-fit:cover}
 .pfc button{width:100%;min-height:44px;padding:4px 6px;font-size:13px;line-height:1.15}
+#ad .bkb{flex:0 0 64px}
+#bd{justify-content:flex-end;gap:4px;padding:6px 8px}
+#bd .bkb{width:88px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px 2px;border:0;background:none;color:var(--ink);font-size:12px;line-height:1.15}
+#bd .bkb svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #hd{gap:4px;padding:6px 8px}
 #hd .tb{flex:1;min-width:0;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px 2px;border:0;background:none;color:var(--ink);font-size:12px;line-height:1.15}
 #hd .tb:disabled{opacity:.45}
@@ -110,7 +114,7 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 </style>
 </head>
 <body>
-<header><button id="bk" hidden data-ta="back">←</button><h1 id="ti">Photo Sharing</h1><a class="hb" id="igh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/></svg><span data-t="contact"></span></a></header>
+<header><h1 id="ti">Photo Sharing</h1><a class="hb" id="igh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/></svg><span data-t="contact"></span></a></header>
 <main>
   <section id="home"><div id="car"></div><div id="dots"></div><div id="appver"></div></section>
   <section id="pinbox" hidden>
@@ -165,7 +169,8 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
   <button class="side l" id="pv" data-ta="prev_photo">‹</button><button class="side r" id="nx" data-ta="next_photo">›</button>
 </section>
 <nav class="dock" id="hd"><button class="nv" id="hp" disabled data-ta="prev_ev"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="tb" id="hv" disabled><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span data-t="view_photos"></span></button><button class="tb" id="pfb"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="my_selfie"></span></button><button class="nv" id="hn" disabled data-ta="next_ev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></nav>
-<nav class="dock" id="ad" hidden><button id="sf"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="selfie"></span></button><button id="zm"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span></span></button><button id="dl" disabled><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span></span></button></nav>
+<nav class="dock" id="ad" hidden><button id="sf"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="selfie"></span></button><button id="zm"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span></span></button><button id="dl" disabled><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span></span></button><button class="bkb" data-ta="back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-t="back"></span></button></nav>
+<nav class="dock" id="bd" hidden><button class="bkb" data-ta="back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-t="back"></span></button></nav>
 <input type="file" id="sfile" accept="image/*" capture="user" hidden>
 <input type="file" id="pffile" accept="image/*" capture="user" hidden>
 
@@ -241,7 +246,7 @@ const updDl = () => { $("#dl").hidden = S.info?.allowDownload === false; $("#dl"
 function show(id) {
   for (const s of ["home", "pinbox", "album", "adm", "prof"]) $("#" + s).hidden = s !== id;
   $("#vw").hidden = true; $("main").hidden = false; setZm(false);
-  $("#bk").hidden = id === "home"; $("#igh").hidden = id !== "home"; $("#hd").hidden = id !== "home"; $("#ad").hidden = id !== "album";
+  $("#bd").hidden = !["pinbox", "adm", "prof"].includes(id); $("#igh").hidden = id !== "home"; $("#hd").hidden = id !== "home"; $("#ad").hidden = id !== "album";
   $("#ti").textContent = id === "adm" ? "Admin" : id === "prof" ? tr("my_selfie") : id === "album" && S.ev ? S.ev.name : "Photo Sharing";
 }
 
@@ -279,7 +284,7 @@ $("#car").onclick = e => { const sl = e.target.closest(".slide"); if (sl) go(sl.
 $("#hv").onclick = () => go(S.evs?.[slideN()]?.id);
 $("#hp").onclick = () => $("#car").scrollBy({ left: -$("#car").clientWidth, behavior: "smooth" });
 $("#hn").onclick = () => $("#car").scrollBy({ left: $("#car").clientWidth, behavior: "smooth" });
-$("#bk").onclick = home;
+document.querySelectorAll(".bkb").forEach(b => b.onclick = home);
 const SLOTS = ["left", "front", "right"]; let pfSlot = null, pfUrls = [];
 const pdb = () => new Promise((ok, no) => { const r = indexedDB.open("ns_profile", 1); r.onupgradeneeded = () => r.result.createObjectStore("s"); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
 const pget = async k => { const d = await pdb(); return new Promise((ok, no) => { const q = d.transaction("s").objectStore("s").get(k); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); }); };
@@ -321,7 +326,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.14"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.15"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
