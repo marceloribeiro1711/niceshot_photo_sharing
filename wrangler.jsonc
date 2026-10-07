@@ -9,9 +9,13 @@
     { "binding": "EVENTS", "id": "41f1e1266ff34f1cbe75920aad323df1" }
   ],
 
+  // Correio da busca por selfie (criado sozinho no deploy; nada a fazer no painel).
+  "durable_objects": { "bindings": [{ "name": "FILA", "class_name": "Fila" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Fila"] }],
+
   // Endereço do app (GitHub Pages). Vários endereços: separe por vírgula.
   "vars": { "ALLOWED_ORIGIN": "https://marceloribeiro1711.github.io" }
 
-  // As chaves GOOGLE_API_KEY, ADMIN_KEY e TOKEN_SECRET ficam só no painel
+  // As chaves GOOGLE_API_KEY, ADMIN_KEY, TOKEN_SECRET e MAC_KEY ficam só no painel
   // (Settings > Variables and Secrets). Nunca coloque chaves neste arquivo.
 }

@@ -3,10 +3,13 @@
 //
 // Bindings necessários:
 //   KV   EVENTS            (armazena eventos, PINs e a pasta global do Drive)
-//   Secrets: GOOGLE_API_KEY, ADMIN_KEY, TOKEN_SECRET
+//   DO   FILA              (correio da busca por selfie; criado sozinho pelo wrangler.jsonc, nada a fazer no painel)
+//   Secrets: GOOGLE_API_KEY, ADMIN_KEY, TOKEN_SECRET, MAC_KEY (senha do Photo Server no Mac)
 //   Var:     ALLOWED_ORIGIN (ex.: https://niceshot.meudominio.com — vários separados por vírgula)
 
-const BUILD = "2026-10-05-a"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
+import { DurableObject } from "cloudflare:workers";
+
+const BUILD = "2026-10-07-a"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
 const DRIVE = "https://www.googleapis.com/drive/v3";
 const TOKEN_TTL = 60 * 60 * 24 * 3; // sessão do visitante: 3 dias
 const LIST_TTL = 60; // cache da listagem de fotos (segundos)
@@ -14,6 +17,10 @@ const PIN_ALPHABET = "0123456789"; // PIN de 4 dígitos
 const ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 const MAX_DRIVE_CALLS = 45; // proteção contra o limite de subrequisições do Worker
 const enc = new TextEncoder();
+const SELFIE_DAYS = 7; // as selfies ficam no correio por 7 dias
+const MAC_ONLINE_MS = 30 * 1000; // Mac considerado ligado se consultou o correio nos últimos 30 s
+const SLOTS = ["left", "front", "right"];
+const MAX_IMG_CHARS = 900000; // por selfie (data URL em texto)
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -54,6 +61,9 @@ async function route(req, env, ctx, url) {
   if ((r = p.match(/^\/api\/cover\/([a-z0-9]+)$/)) && m === "GET") return cover(env, ctx, url, r[1]);
   if ((r = p.match(/^\/api\/thumb\/([\w-]+)$/)) && m === "GET") return thumb(env, ctx, url, r[1]);
   if ((r = p.match(/^\/api\/download\/([\w-]+)$/)) && m === "GET") return download(env, url, r[1]);
+  if (p === "/api/selfie/search" && m === "POST") return selfieSearch(req, env);
+  if (p === "/api/selfie/status" && m === "GET") return selfieStatus(env, url);
+  if (p.startsWith("/api/mac/")) return mac(req, env, p, m);
   if (p.startsWith("/api/admin/")) return admin(req, env, p, m);
   throw new HttpError(404, "not found");
 }
@@ -406,6 +416,128 @@ async function limit(req, bucket, max, windowSec) {
   const n = hit ? Number(await hit.text()) : 0;
   if (n >= max) throw new HttpError(429, "Too many attempts, please wait a minute");
   await cache.put(key, new Response(String(n + 1), { headers: { "Cache-Control": `max-age=${windowSec}` } }));
+}
+
+/* ------------------------- busca por selfie (correio) ----------------- */
+
+function fila(env) {
+  if (!env.FILA) throw new HttpError(503, "busca por selfie não configurada");
+  return env.FILA.get(env.FILA.idFromName("principal"));
+}
+
+function cleanCode(v) {
+  const c = String(v || "");
+  if (!/^[A-Za-z0-9_-]{20,80}$/.test(c)) throw new HttpError(400, "código inválido");
+  return c;
+}
+
+// App -> Worker: envia as selfies. Se o Mac não estiver ligado, nada é guardado e o app avisa na hora.
+async function selfieSearch(req, env) {
+  await limit(req, "selfie", 12, 60);
+  if (Number(req.headers.get("Content-Length") || 0) > 3_000_000) throw new HttpError(413, "fotos grandes demais");
+  const b = await readJson(req);
+  const code = cleanCode(b.code);
+  const images = {};
+  for (const k of SLOTS) {
+    const v = b.images && b.images[k];
+    if (!v) continue;
+    if (typeof v !== "string" || v.length > MAX_IMG_CHARS || !/^data:image\/(jpeg|png|webp);base64,/.test(v)) throw new HttpError(400, "foto inválida");
+    images[k] = v;
+  }
+  if (!Object.keys(images).length) throw new HttpError(400, "nenhuma selfie enviada");
+  return json(await fila(env).search(code, images));
+}
+
+// App -> Worker: como está a busca desse código (e se o Mac está ligado).
+async function selfieStatus(env, url) {
+  return json(await fila(env).status(cleanCode(url.searchParams.get("code"))));
+}
+
+// Mac -> Worker (protegido pela senha MAC_KEY).
+async function mac(req, env, p, m) {
+  const auth = req.headers.get("Authorization") || "";
+  if (!env.MAC_KEY || !safeEqual(auth, `Bearer ${env.MAC_KEY}`)) throw new HttpError(401, "não autorizado");
+  if (p === "/api/mac/next" && m === "GET") return json(await fila(env).next());
+  if (p === "/api/mac/result" && m === "POST") {
+    const b = await readJson(req);
+    const state = ["done", "nomatch", "error"].includes(b.state) ? b.state : null;
+    if (!state) throw new HttpError(400, "estado inválido");
+    const ids = Array.isArray(b.ids) ? b.ids.filter((x) => typeof x === "string" && /^[\w-]{10,80}$/.test(x)).slice(0, 5000) : [];
+    return json(await fila(env).result(cleanCode(b.code), Number(b.created) || 0, state, ids));
+  }
+  throw new HttpError(404, "not found");
+}
+
+// O "correio": um guichê único (Durable Object) que guarda pedidos, selfies (7 dias) e resultados.
+export class Fila extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.sql = ctx.storage.sql;
+    this.sql.exec("create table if not exists req(code text primary key, created integer, state text, lease integer, ids text, updated integer)");
+    this.sql.exec("create table if not exists img(code text, slot text, data text, primary key(code, slot))");
+    this.sql.exec("create table if not exists meta(k text primary key, v integer)");
+  }
+
+  lastPoll() {
+    const r = this.sql.exec("select v from meta where k='poll'").toArray();
+    return r.length ? r[0].v : 0;
+  }
+
+  online() {
+    return Date.now() - this.lastPoll() < MAC_ONLINE_MS;
+  }
+
+  purge(now) {
+    this.sql.exec("delete from req where created < ?", now - SELFIE_DAYS * 86400000);
+    this.sql.exec("delete from img where code not in (select code from req)");
+  }
+
+  search(code, images) {
+    if (!this.online()) return { state: "offline", online: false };
+    const now = Date.now();
+    this.purge(now);
+    this.sql.exec("delete from img where code = ?", code);
+    for (const [slot, data] of Object.entries(images)) this.sql.exec("insert into img(code, slot, data) values(?,?,?)", code, slot, data);
+    this.sql.exec(
+      "insert into req(code, created, state, lease, ids, updated) values(?,?,?,?,?,?) " +
+        "on conflict(code) do update set created=excluded.created, state='pending', lease=0, ids='[]', updated=excluded.updated",
+      code, now, "pending", 0, "[]", now
+    );
+    return { state: "pending", online: true };
+  }
+
+  status(code) {
+    const online = this.online();
+    const r = this.sql.exec("select state, ids, updated from req where code = ?", code).toArray();
+    if (!r.length) return { state: "none", ids: [], online };
+    const row = r[0];
+    // pedido parado e Mac sem consultar: avisa que o serviço não está disponível
+    if (!online && (row.state === "pending" || row.state === "processing")) return { state: "offline", ids: [], online };
+    return { state: row.state, ids: JSON.parse(row.ids || "[]"), updated: row.updated, online };
+  }
+
+  next() {
+    const now = Date.now();
+    this.sql.exec("insert into meta(k, v) values('poll', ?) on conflict(k) do update set v=excluded.v", now);
+    this.purge(now);
+    const r = this.sql
+      .exec("select code, created from req where state='pending' or (state='processing' and lease < ?) order by created limit 1", now)
+      .toArray();
+    if (!r.length) return { request: null };
+    const { code, created } = r[0];
+    this.sql.exec("update req set state='processing', lease=? where code=?", now + 60000, code);
+    const images = {};
+    for (const x of this.sql.exec("select slot, data from img where code = ?", code)) images[x.slot] = x.data;
+    return { request: { code, created, images } };
+  }
+
+  result(code, created, state, ids) {
+    const r = this.sql.exec("select created from req where code = ?", code).toArray();
+    // ignora resultado de um pedido antigo (a pessoa já buscou de novo) ou que já expirou
+    if (!r.length || r[0].created !== created) return { ok: false, ignored: true };
+    this.sql.exec("update req set state=?, ids=?, lease=0, updated=? where code=?", state, JSON.stringify(ids), Date.now(), code);
+    return { ok: true };
+  }
 }
 
 /* ------------------------------ utilitários -------------------------- */

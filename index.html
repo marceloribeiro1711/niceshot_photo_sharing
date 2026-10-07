@@ -326,7 +326,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.15"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.16"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -345,7 +345,7 @@ async function api(path, opt = {}) {
 }
 const put = (id, body) => api("/api/admin/events/" + id, { method: "PUT", body: JSON.stringify(body) });
 
-const NEED = "2026-10-05-a"; // versão do Worker que esta página espera
+const NEED = "2026-10-07-a"; // versão do Worker que esta página espera
 async function checkVer() {
   try {
     const v = await (await fetch(base() + "/api/health")).json();
