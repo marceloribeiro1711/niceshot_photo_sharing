@@ -334,7 +334,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.17"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.18"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -502,7 +502,7 @@ async function openAlbum() {
 const view = () => S.tab === "mine" ? (S.mine ? S.photos.filter(p => S.mine.has(p.id)) : []) : S.photos;
 const dmy = d => d.split("-").reverse().join("/");
 const waitMsg = () => {
-  if (S.tab === "mine") return S.mineState === "error" ? tr("svc_off") : (S.mineState === "done" || S.mineState === "nomatch") ? tr("none_event") : "";
+  if (S.tab === "mine") return S.mineState === "error" ? tr("svc_off") + (S.dbg ? " [" + S.dbg + "]" : "") : (S.mineState === "done" || S.mineState === "nomatch") ? tr("none_event") : "";
   const f = S.info?.dateFrom, hoje = new Date().toLocaleDateString("sv");
   return f && f > hoje ? `${tr("avail_from", { d: fmtDate(f) })}` : tr("none_yet");
 };
@@ -605,7 +605,7 @@ function applyResult(st, quiet) {
   else { S.mine = null; S.mineState = "error"; if (!quiet) say(tr("svc_off")); }
   S.tab = "mine"; draw();
 }
-// contador de 20 s ("Agrupando suas fotos") e depois de 10 s ("Preparando a apresentação das fotos"); consulta o correio a cada 3 s
+// contador de 20 s ("Agrupando suas fotos") e depois de 10 s ("Preparando a apresentação das fotos"); consulta o correio a cada 2 s e mostra o resultado assim que chegar
 async function waitFor(code) {
   const run = S.run;
   for (const [secs, key] of [[20, "agr"], [10, "prep"]]) {
@@ -613,9 +613,10 @@ async function waitFor(code) {
       if (S.run !== run) return null;
       prog(`${tr(key)} (${t}s)`, (secs - t + 1) / secs * 100);
       await sleep(1000);
-      if (t % 3 === 0) { const st = await selfieStatus(code); if (["done", "nomatch", "error", "offline"].includes(st.state)) return st; }
+      if (t % 2 === 0) { const st = await selfieStatus(code); if (["done", "nomatch", "error", "offline"].includes(st.state)) { S.dbg = "status " + st.state; return st; } }
     }
   }
+  S.dbg = "sem resposta do Mac em 30 s";
   return { state: "error" };
 }
 async function startSearch() {
@@ -630,11 +631,13 @@ async function startSearch() {
   if (!$("#vw").hidden) closeViewer();
   S.busy = true; S.tab = "mine"; S.mine = null; S.mineState = "searching"; draw();
   const code = await myCode();
-  let r = { state: "error" };
+  let r = { state: "error" }; S.dbg = "";
   try {
     const res = await fetch(base() + "/api/selfie/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, images }) });
+    S.dbg = "HTTP " + res.status;
     if (res.ok) r = await res.json();
-  } catch {}
+    if (r.state) S.dbg += " · " + r.state;
+  } catch (e) { S.dbg = "falha de rede: " + (e && e.message ? e.message : e); }
   if (r.state !== "pending") return applyResult({ state: "error" });
   const st = await waitFor(code);
   if (st) applyResult(st); else S.busy = false;
