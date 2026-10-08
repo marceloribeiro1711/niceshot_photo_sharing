@@ -334,7 +334,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.18"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.19"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -584,6 +584,7 @@ const prog = (t, pct) => { $("#pg").hidden = pct < 0; $("#pt").textContent = t; 
 $("#sf").onclick = () => startSearch();
 $("#pc").onclick = () => { S.run++; prog("", -1); };
 /* ---- busca por selfie: o Mac faz a comparação (Photo Server 0.4) ---- */
+const apiBase = () => (localStorage.getItem("ns_url") || API).trim().replace(/\/+$/, "");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const dataUrl = b => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => no(r.error); r.readAsDataURL(b); });
 async function myCode() {
@@ -592,7 +593,7 @@ async function myCode() {
   return c;
 }
 async function selfieStatus(code) {
-  try { const r = await fetch(base() + "/api/selfie/status?code=" + encodeURIComponent(code)); return r.ok ? await r.json() : { state: "error" }; }
+  try { const r = await fetch(apiBase() + "/api/selfie/status?code=" + encodeURIComponent(code)); return r.ok ? await r.json() : { state: "error" }; }
   catch { return { state: "error" }; }
 }
 function applyResult(st, quiet) {
@@ -633,7 +634,7 @@ async function startSearch() {
   const code = await myCode();
   let r = { state: "error" }; S.dbg = "";
   try {
-    const res = await fetch(base() + "/api/selfie/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, images }) });
+    const res = await fetch(apiBase() + "/api/selfie/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, images }) });
     S.dbg = "HTTP " + res.status;
     if (res.ok) r = await res.json();
     if (r.state) S.dbg += " · " + r.state;
