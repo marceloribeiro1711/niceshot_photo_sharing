@@ -1,4 +1,5 @@
 {
+  "keep_vars": true,
   // O "name" precisa ser igual ao nome do Worker no painel da Cloudflare.
   "name": "niceshot-api",
   "main": "worker.js",

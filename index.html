@@ -111,6 +111,9 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 #hd .tb{flex:1;min-width:0;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px 2px;border:0;background:none;color:var(--ink);font-size:12px;line-height:1.15}
 #hd .tb:disabled{opacity:.45}
 #hd .tb svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs{display:flex;gap:8px;margin:8px 0 10px}
+.tabs .tab{flex:1;min-height:44px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:15px}
+.tabs .tab.on{border-color:var(--ink);font-weight:600}
 </style>
 </head>
 <body>
@@ -126,7 +129,7 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
   <section id="album" hidden>
     <div class="bar"><button id="sv" class="p" hidden></button></div>
     <div id="pg" class="prog" hidden><span id="pt"></span> <button id="pc" style="min-height:32px" data-t="cancel"></button><i id="pb"></i></div>
-    <div id="fl" class="mute" hidden></div>
+    <div id="fl" class="tabs" hidden></div>
     <div class="g" id="gr"></div>
   </section>
 <section id="prof" hidden>
@@ -171,7 +174,6 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 <nav class="dock" id="hd"><button class="nv" id="hp" disabled data-ta="prev_ev"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="tb" id="hv" disabled><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span data-t="view_photos"></span></button><button class="tb" id="pfb"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="my_selfie"></span></button><button class="nv" id="hn" disabled data-ta="next_ev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></nav>
 <nav class="dock" id="ad" hidden><button id="sf"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="selfie"></span></button><button id="zm"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span></span></button><button id="dl" disabled><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span></span></button><button class="bkb" data-ta="back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-t="back"></span></button></nav>
 <nav class="dock" id="bd" hidden><button class="bkb" data-ta="back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-t="back"></span></button></nav>
-<input type="file" id="sfile" accept="image/*" capture="user" hidden>
 <input type="file" id="pffile" accept="image/*" capture="user" hidden>
 
 <div id="msg" role="status"></div>
@@ -182,7 +184,7 @@ const IG = "https://www.instagram.com/niceshot.pt/"; // perfil da NiceShot
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-const S = { ev: null, tok: "", photos: [], sel: new Set(), mine: null, idx: 0, run: 0, desc: new Map(), files: [] };
+const S = { ev: null, tok: "", photos: [], sel: new Set(), mine: null, mineState: null, tab: "all", busy: false, idx: 0, run: 0, desc: new Map(), files: [] };
 
 const LANGS = ["en", "pt", "es", "fr"], LANG = LANGS.find(l => (navigator.language || "").toLowerCase().startsWith(l)) || "en", LI = LANGS.indexOf(LANG), LOC = LANG === "en" ? "en-GB" : navigator.language;
 const DICT = {
@@ -207,7 +209,7 @@ const DICT = {
   save_gallery: ["Save {n} photo(s) to gallery", "Salvar {n} foto(s) na galeria", "Guardar {n} foto(s) en la galería", "Enregistrer {n} photo(s) dans la galerie"],
   done_tap: ["Done! Tap Save to gallery.", "Pronto! Toque em Salvar na galeria.", "¡Listo! Toca Guardar en la galería.", "Terminé ! Touchez Enregistrer dans la galerie."],
   downloaded: ["Photos downloaded.", "Fotos baixadas.", "Fotos descargadas.", "Photos téléchargées."], share_fail: ["Couldn't open the share sheet.", "Não consegui abrir o compartilhamento.", "No se pudo abrir el menú de compartir.", "Impossible d'ouvrir le partage."],
-  selfie_ask: ["We'll compare your selfie with the event photos. Your selfie stays on your device and is never uploaded. Continue?", "Vamos comparar a sua selfie com as fotos do evento. A selfie fica só no seu aparelho e não é enviada. Continuar?", "Compararemos tu selfie con las fotos del evento. Tu selfie se queda en tu dispositivo y no se sube. ¿Continuar?", "Nous allons comparer votre selfie aux photos de l'événement. Il reste sur votre appareil et n'est jamais envoyé. Continuer ?"],
+  selfie_ask: ["Your profile selfies are sent to the NiceShot server to find your photos. They are deleted after 7 days. Continue?", "As selfies do seu perfil são enviadas ao servidor do NiceShot para encontrar as suas fotos. Elas são apagadas em 7 dias. Continuar?", "Las selfies de tu perfil se envían al servidor de NiceShot para encontrar tus fotos. Se borran en 7 días. ¿Continuar?", "Vos selfies de profil sont envoyées au serveur NiceShot pour trouver vos photos. Elles sont supprimées au bout de 7 jours. Continuer ?"],
   face_load: ["Couldn't load face matching. Check your connection.", "Não consegui carregar o reconhecimento facial. Verifique a conexão.", "No se pudo cargar el reconocimiento facial. Revisa tu conexión.", "Impossible de charger la reconnaissance faciale. Vérifiez votre connexion."],
   face_prep: ["Preparing face matching (first time downloads about 12 MB)…", "Preparando o reconhecimento (na primeira vez baixa cerca de 12 MB)…", "Preparando el reconocimiento (la primera vez descarga unos 12 MB)…", "Préparation de la reconnaissance (environ 12 Mo la première fois)…"],
   no_face: ["Couldn't find your face in the selfie. Face the camera in good light.", "Não achei seu rosto na selfie. Tente de frente e com mais luz.", "No encontré tu cara en la selfie. Mira de frente y con buena luz.", "Visage introuvable sur le selfie. Face à l'appareil, avec plus de lumière."],
@@ -218,6 +220,12 @@ const DICT = {
   e_many: ["Too many attempts, wait a minute", "Muitas tentativas, aguarde um minuto", "Demasiados intentos, espera un minuto", "Trop de tentatives, patientez une minute"],
   e_unavail: ["Album unavailable", "Álbum indisponível", "Álbum no disponible", "Album indisponible"], e_pin: ["Invalid PIN", "PIN inválido", "PIN no válido", "Code PIN invalide"],
   e_nodl: ["Downloads are disabled for this album", "Download desativado neste álbum", "Las descargas están desactivadas en este álbum", "Les téléchargements sont désactivés pour cet album"],
+  tab_all: ["All photos", "Todas as fotos", "Todas las fotos", "Toutes les photos"],
+  tab_mine: ["My Photos", "Minhas Fotos", "Mis fotos", "Mes photos"],
+  agr: ["Grouping your photos", "Agrupando suas fotos", "Agrupando tus fotos", "Regroupement de vos photos"],
+  prep: ["Preparing the photo presentation", "Preparando a apresentação das fotos", "Preparando la presentación de las fotos", "Préparation du diaporama des photos"],
+  svc_off: ["Photo search unavailable. Try again later", "Busca por selfie indisponível. Tente mais tarde", "Búsqueda por selfie no disponible. Inténtalo más tarde", "Recherche par selfie indisponible. Réessayez plus tard"],
+  none_event: ["We didn't find photos of you in this event.", "Não encontramos fotos suas neste evento", "No encontramos fotos tuyas en este evento", "Nous n'avons pas trouvé de photos de vous dans cet événement"],
   my_selfie: ["My Selfie", "Minha Selfie", "Mi selfie", "Mon selfie"],
   front: ["Front Selfie", "Selfie de Frente", "Selfie de frente", "Selfie de face"],
   left: ["Left Profile Selfie", "Selfie Perfil Esquerdo", "Selfie perfil izquierdo", "Selfie profil gauche"],
@@ -326,7 +334,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.16"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.17"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -488,22 +496,23 @@ $("#pin").oninput = e => { e.target.value = e.target.value.replace(/\D/g, ""); i
 /* ---- álbum ---- */
 async function openAlbum() {
   const r = await j("/api/photos?token=" + encodeURIComponent(S.tok));
-  S.photos = r.photos; S.info = r.event; S.sel.clear(); S.mine = null; S.desc = new Map(); S.run++;
+  S.photos = r.photos; S.info = r.event; S.sel.clear(); S.mine = null; S.mineState = null; S.tab = "all"; S.busy = false; S.desc = new Map(); S.run++;
   $("#pg").hidden = true; $("#sv").hidden = true; show("album"); draw();
 }
-const view = () => S.mine ? S.photos.filter(p => S.mine.has(p.id)) : S.photos;
+const view = () => S.tab === "mine" ? (S.mine ? S.photos.filter(p => S.mine.has(p.id)) : []) : S.photos;
 const dmy = d => d.split("-").reverse().join("/");
 const waitMsg = () => {
+  if (S.tab === "mine") return S.mineState === "error" ? tr("svc_off") : (S.mineState === "done" || S.mineState === "nomatch") ? tr("none_event") : "";
   const f = S.info?.dateFrom, hoje = new Date().toLocaleDateString("sv");
-  return f && f > hoje ? `${tr("avail_from", { d: fmtDate(f) })}` : S.mine ? tr("none_mine") : tr("none_yet");
+  return f && f > hoje ? `${tr("avail_from", { d: fmtDate(f) })}` : tr("none_yet");
 };
 function draw() {
   const list = view(), canDl = S.info?.allowDownload !== false;
   $("#zm").disabled = !list.length;
   $("#gr").innerHTML = list.length ? list.map((p, i) => `<div class="t ${S.sel.has(p.id) ? "on" : ""}" data-i="${i}" data-id="${p.id}"><img loading="lazy" alt="" src="${thumb(p, 400)}">${canDl ? `<button class="k" aria-label="${tr("select")}">${S.sel.has(p.id) ? "✓" : ""}</button>` : ""}</div>`).join("") : `<p class="mute" style="padding:10px 0">${waitMsg()}</p>`;
   updDl();
-  const f = $("#fl"); f.hidden = !S.mine;
-  if (S.mine) f.innerHTML = `${tr("mine_n", { n: list.length })} <button id="all" style="min-height:32px">${tr("show_all")}</button>`;
+  const f = $("#fl"); f.hidden = false;
+  f.innerHTML = `<button class="tab ${S.tab === "all" ? "on" : ""}" data-tab="all">${tr("tab_all")}</button><button class="tab ${S.tab === "mine" ? "on" : ""}" data-tab="mine">${tr("tab_mine")}</button>`;
 }
 function toggleSel(id) {
   if (S.sel.has(id)) S.sel.delete(id);
@@ -518,7 +527,7 @@ $("#gr").onclick = e => {
 };
 const firstVisible = () => { const top = $("main").getBoundingClientRect().top, t = [...document.querySelectorAll("#gr .t")].find(x => x.getBoundingClientRect().bottom > top + 8); return t ? Number(t.dataset.i) : -1; };
 $("#zm").onclick = () => { if (!$("#vw").hidden) return closeViewer(); S.idx = firstVisible(); if (S.idx >= 0) openViewer(); };
-$("#fl").onclick = e => { if (e.target.id === "all") { S.mine = null; draw(); } };
+$("#fl").onclick = e => { const b = e.target.closest("[data-tab]"); if (!b) return; if (b.dataset.tab === "all") { S.tab = "all"; draw(); } else openMine(); };
 
 /* ---- fotos grandes, uma a uma (a barra inferior continua) ---- */
 function vsync() { const p = view()[S.idx]; if (!p) return; const on = S.sel.has(p.id); $("#vs").hidden = S.info?.allowDownload === false; $("#vs").textContent = on ? "✓" : ""; $("#vs").classList.toggle("on", on); }
@@ -572,30 +581,76 @@ const loadFace = () => faceReady ||= (async () => {
 const img = (src, cors) => new Promise((ok, no) => { const i = new Image(); if (cors) i.crossOrigin = "anonymous"; i.onload = () => ok(i); i.onerror = no; i.src = src; });
 const prog = (t, pct) => { $("#pg").hidden = pct < 0; $("#pt").textContent = t; $("#pb").style.width = Math.max(pct, 0) + "%"; };
 
-$("#sf").onclick = () => { if (confirm(tr("selfie_ask"))) { if (!$("#vw").hidden) closeViewer(); $("#sfile").click(); } };
+$("#sf").onclick = () => startSearch();
 $("#pc").onclick = () => { S.run++; prog("", -1); };
-$("#sfile").onchange = async e => {
-  const file = e.target.files[0]; e.target.value = ""; if (!file) return;
-  const my = ++S.run;
+/* ---- busca por selfie: o Mac faz a comparação (Photo Server 0.4) ---- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const dataUrl = b => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => no(r.error); r.readAsDataURL(b); });
+async function myCode() {
+  let c = await pget("code").catch(() => null);
+  if (!c) { c = Array.from(crypto.getRandomValues(new Uint8Array(24)), b => (b % 36).toString(36)).join(""); await pput("code", c).catch(() => {}); }
+  return c;
+}
+async function selfieStatus(code) {
+  try { const r = await fetch(base() + "/api/selfie/status?code=" + encodeURIComponent(code)); return r.ok ? await r.json() : { state: "error" }; }
+  catch { return { state: "error" }; }
+}
+function applyResult(st, quiet) {
+  S.busy = false; prog("", -1);
+  if (st.state === "done") {
+    S.mine = new Set(st.ids || []); S.mineState = "done";
+    const n = S.photos.filter(p => S.mine.has(p.id)).length;
+    if (!quiet) say(n ? tr("mine_n", { n }) : tr("none_event"));
+  } else if (st.state === "nomatch") { S.mine = new Set(); S.mineState = "nomatch"; if (!quiet) say(tr("none_event")); }
+  else { S.mine = null; S.mineState = "error"; if (!quiet) say(tr("svc_off")); }
+  S.tab = "mine"; draw();
+}
+// contador de 20 s ("Agrupando suas fotos") e depois de 10 s ("Preparando a apresentação das fotos"); consulta o correio a cada 3 s
+async function waitFor(code) {
+  const run = S.run;
+  for (const [secs, key] of [[20, "agr"], [10, "prep"]]) {
+    for (let t = secs; t > 0; t--) {
+      if (S.run !== run) return null;
+      prog(`${tr(key)} (${t}s)`, (secs - t + 1) / secs * 100);
+      await sleep(1000);
+      if (t % 3 === 0) { const st = await selfieStatus(code); if (["done", "nomatch", "error", "offline"].includes(st.state)) return st; }
+    }
+  }
+  return { state: "error" };
+}
+async function startSearch() {
+  if (S.busy) return;
+  const images = {};
+  for (const k of SLOTS) { const b = await pget(k).catch(() => null); if (b) images[k] = await dataUrl(b); }
+  if (!Object.keys(images).length) { S.tab = "all"; show("prof"); return drawProfile(); }
+  if (!localStorage.getItem("ns_consent")) {
+    if (!confirm(tr("selfie_ask"))) { S.tab = "all"; return draw(); }
+    localStorage.setItem("ns_consent", "1");
+  }
+  if (!$("#vw").hidden) closeViewer();
+  S.busy = true; S.tab = "mine"; S.mine = null; S.mineState = "searching"; draw();
+  const code = await myCode();
+  let r = { state: "error" };
   try {
-    prog(tr("face_prep"), 5); await loadFace();
-    const me = await faceapi.detectSingleFace(await img(URL.createObjectURL(file))).withFaceLandmarks().withFaceDescriptor();
-    if (!me) { prog("", -1); return say(tr("no_face")); }
-    const q = [...S.photos], hits = new Set(), total = q.length; let done = 0;
-    const work = async () => {
-      while (q.length && S.run === my) {
-        const p = q.shift(); let d = S.desc.get(p.id);
-        if (!d) { try { const fs = await faceapi.detectAllFaces(await img(thumb(p, 800), true)).withFaceLandmarks().withFaceDescriptors(); d = fs.map(f => f.descriptor); } catch { d = []; } S.desc.set(p.id, d); }
-        if (d.some(x => faceapi.euclideanDistance(me.descriptor, x) < 0.55)) hits.add(p.id);
-        prog(tr("searching", { i: ++done, n: total }), done / total * 100);
-      }
-    };
-    await Promise.all([work(), work()]);
-    if (S.run !== my) return;
-    prog("", -1); S.mine = hits; draw();
-    say(hits.size ? tr("mine_n", { n: hits.size }) : tr("none_found"));
-  } catch (err) { prog("", -1); say(err.message || tr("cmp_fail")); }
-};
+    const res = await fetch(base() + "/api/selfie/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, images }) });
+    if (res.ok) r = await res.json();
+  } catch {}
+  if (r.state !== "pending") return applyResult({ state: "error" });
+  const st = await waitFor(code);
+  if (st) applyResult(st); else S.busy = false;
+}
+// toque na aba Minhas Fotos: sem selfies vai ao Perfil; sem busca ainda, faz a busca; senão mostra o resultado atual
+async function openMine() {
+  if (S.busy) { S.tab = "mine"; return draw(); }
+  const f = await pget("front").catch(() => null), l = await pget("left").catch(() => null), rt = await pget("right").catch(() => null);
+  if (!f && !l && !rt) { S.tab = "all"; show("prof"); return drawProfile(); }
+  S.tab = "mine"; draw();
+  const code = await myCode();
+  const st = await selfieStatus(code);
+  if (st.state === "none") return startSearch();
+  if (st.state === "pending" || st.state === "processing") { S.busy = true; const w = await waitFor(code); if (w) applyResult(w, true); else S.busy = false; return; }
+  applyResult(st, true);
+}
 
 $("#igh").href = IG;
 document.documentElement.lang = LANG;
