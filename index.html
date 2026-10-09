@@ -312,7 +312,12 @@ async function drawProfile() {
   $("#pfl").innerHTML = h;
 }
 $("#pfb").onclick = () => { $("#pfe").textContent = ""; show("prof"); drawProfile(); };
-$("#pfl").onclick = e => { const b = e.target.closest("button"); if (!b) return; pfSlot = b.dataset.s; $("#pfe").textContent = ""; $("#pffile").click(); };
+let pfBusy = false;
+$("#pfl").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (pfBusy) { say(tr("pf_check")); return; } // enquanto uma foto é guardada, ignora outros toques
+  pfSlot = b.dataset.s; $("#pffile").dataset.slot = pfSlot; $("#pfe").textContent = ""; $("#pffile").click();
+};
 async function pfCheck(blob, slot) { // confere a foto no próprio aparelho; devolve a chave do erro ou null
   let res;
   try {
@@ -330,16 +335,18 @@ async function pfCheck(blob, slot) { // confere a foto no próprio aparelho; dev
   return null;
 }
 const pfGot = async e => {
-  const f = e.target.files[0]; e.target.value = ""; if (!f || !pfSlot) return; $("#pfe").textContent = "";
+  const input = e.target, slot = input.dataset.slot, f = input.files[0]; input.value = "";
+  if (!f || !slot) return; $("#pfe").textContent = ""; pfBusy = true;
   try {
-    const blob = await shrink(f, 1024), bad = await pfCheck(blob, pfSlot);
+    const blob = await shrink(f, 1024), bad = await pfCheck(blob, slot); // a caixa é a de quando a foto foi tirada
     if (bad) { $("#pfe").textContent = tr(bad); return; }
-    await pput(pfSlot, blob);
+    await pput(slot, blob);
   } catch { say(tr("pf_err")); }
+  finally { pfBusy = false; }
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.21"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.22"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
