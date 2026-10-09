@@ -32,9 +32,11 @@ main{flex:1;min-height:0;overflow-y:auto;width:100%;max-width:720px;margin:0 aut
 #pinbox h2{margin:0 0 4px;font-size:24px;line-height:1.2}
 #pin{width:9ch;font:700 40px/1.3 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.2em;text-align:center;background:var(--ball);color:#1b2200;border:0;border-radius:8px;padding:4px 0 4px .2em}
 .bar{position:sticky;top:0;z-index:2;display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;background:var(--bg)}
-.g{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.g{column-count:2;column-gap:4px}
+@media (min-width:700px){.g{column-count:3}}
 .t{position:relative}
-.t img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:var(--line)}
+.g .t{break-inside:avoid;margin:0 0 4px}
+.t img{display:block;width:100%;height:auto;min-height:90px;background:var(--line)}
 .k{position:absolute;top:4px;right:4px;width:30px;min-height:30px;height:30px;padding:0;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);color:#fff;font-weight:700}
 .t.on img{outline:3px solid var(--blue);outline-offset:-3px}
 .t.on .k{background:var(--blue)}
@@ -334,7 +336,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.19"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.20"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
