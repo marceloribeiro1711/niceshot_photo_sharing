@@ -192,6 +192,7 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
   <div class="x-head"><b id="x-pt">Fotos</b><button type="button" id="x-px" class="x-close" aria-label="Fechar">×</button></div><span class="mute" id="x-pc"></span>
   
   <div class="grid" id="x-pg"></div>
+  <div class="row"><button type="button" id="x-pr">Atualizar lista</button><button value="x">Fechar</button></div>
 </form></dialog></div>
 <dialog id="x-lk"><form method="dialog"><b>Acesso ao admin</b><label>Senha de admin</label><input type="password" id="x-kk" autocomplete="off"><p class="mute" id="x-ke"></p><div class="row"><button class="primary" id="x-ko" value="ok">Entrar</button><button value="x">Cancelar</button></div></form></dialog>
 </section>
@@ -397,7 +398,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.42";
+const APP_VER = "1.43";
 (() => { const t0 = performance.now(); const hide = () => { const sp = document.getElementById("splash"); if (!sp) return; sp.classList.add("off"); setTimeout(() => sp.remove(), 450); };
   const go = () => setTimeout(hide, Math.max(0, 1000 - (performance.now() - t0))); // mantém a abertura por pelo menos 1 s
   if (document.readyState === "complete") go(); else window.addEventListener("load", go); })(); $("#appver").textContent = "v" + APP_VER;
@@ -499,7 +500,6 @@ async function preview(ev) {
     const { photos, event } = await fetch(base() + "/api/photos?token=" + encodeURIComponent(token)).then(async r => { const b = await r.json(); if (!r.ok) throw new Error(b.error || r.status); return b; });
     $("#x-pc").textContent = photos.length + " fotos · " + (event && event.dateFrom && event.dateTo ? "filtro " + dmy(event.dateFrom) + " a " + dmy(event.dateTo) : "SEM FILTRO DE DATAS");
     $("#x-pg").innerHTML = photos.length ? photos.map(p => `<div data-f="${p.id}"><button type="button" class="st${p.id === ev.cover ? " on" : ""}" data-s="${p.id}" aria-label="Definir como capa">${p.id === ev.cover ? "★" : "☆"}</button><img loading="lazy" alt="${esc(p.name)}" src="${base()}/api/thumb/${p.id}?s=400&k=${p.k}&token=${encodeURIComponent(token)}"><span title="${esc(p.name)}">${p.exif ? "" : "⚠ "}${esc((p.takenAt || "").slice(0, 16).replace("T", " "))}</span></div>`).join("") : `<p class="mute">Nenhuma foto encontrada com esse prefixo e número inicial. Confira a pasta e o compartilhamento no Drive.</p>`;
-    $("#x-px").onclick = () => $("#x-dp").close();
 $("#x-pg").onclick = async e => {
       const s = e.target.closest("[data-s]");
       if (s) {
@@ -595,6 +595,8 @@ async function adjustPhoto(id, ev) {
   } catch (err) { alert(err.message); }
 }
 
+$("#x-px").onclick = () => $("#x-dp").close();
+$("#x-pr").onclick = () => { if (pvEv) preview(pvEv); };
 $("#x-cfg").onclick = () => {
   $("#x-cu").value = base(); $("#x-ck").value = localStorage.getItem("ns_key") || ""; $("#x-cf").value = ""; $("#x-dc").showModal();
   if (base()) api("/api/admin/settings").then(s => { $("#x-cf").value = s.folderId || ""; }).catch(() => {});
