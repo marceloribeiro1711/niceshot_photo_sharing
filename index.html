@@ -384,7 +384,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.31"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.32"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -517,27 +517,37 @@ function photoMenu(d, ev) {
   };
 }
 // ajuste automático: níveis de luz e contraste (no navegador, sem serviço externo); mostra antes e depois
-async function autoAdjust(blob) {
-  const u = URL.createObjectURL(blob), im = await img(u); URL.revokeObjectURL(u);
-  const W = im.naturalWidth, H = im.naturalHeight, c = document.createElement("canvas"); c.width = W; c.height = H;
-  const x = c.getContext("2d"); x.drawImage(im, 0, 0);
+// ajuste: níveis de luz, contraste em S, saturação e nitidez; k = intensidade (0 a 1); maxW reduz para a prévia
+function renderAdjust(im, k, maxW) {
+  const sc = maxW && im.naturalWidth > maxW ? maxW / im.naturalWidth : 1;
+  const W = Math.round(im.naturalWidth * sc), H = Math.round(im.naturalHeight * sc);
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"); x.drawImage(im, 0, 0, W, H);
   const d = x.getImageData(0, 0, W, H), px = d.data, n = W * H, hist = new Uint32Array(256); let before = 0;
   for (let i = 0; i < px.length; i += 4) { const v = Math.round(0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]); hist[v]++; before += v; }
   before /= n;
   const pct = q => { let acc = 0; for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= q * n) return v; } return 255; };
-  const lo = pct(0.01), hi = pct(0.99), k = 255 / Math.max(1, hi - lo);
-  const gamma = before < 110 ? 0.8 : before > 170 ? 1.15 : 1; // luz baixa: levanta os meios-tons
+  const lo = pct(0.01), hi = pct(0.99), kk = 255 / Math.max(1, hi - lo);
+  const gamma = before < 110 ? 0.8 : before > 170 ? 1.15 : 1;
   const lut = new Uint8Array(256);
-  for (let v = 0; v < 256; v++) lut[v] = Math.round(255 * Math.pow(Math.min(1, Math.max(0, (v - lo) * k / 255)), gamma));
+  for (let v = 0; v < 256; v++) {
+    const lv = Math.pow(Math.min(1, Math.max(0, (v - lo) * kk / 255)), gamma) * 255;
+    const t = (v + k * (lv - v)) / 255;                       // força do ajuste de níveis
+    const sc2 = t * (1 - 0.3 * k) + 0.3 * k * t * t * (3 - 2 * t); // curva em S (contraste)
+    lut[v] = Math.round(255 * Math.min(1, Math.max(0, sc2)));
+  }
   for (let i = 0; i < px.length; i += 4) { px[i] = lut[px[i]]; px[i + 1] = lut[px[i + 1]]; px[i + 2] = lut[px[i + 2]]; }
   x.putImageData(d, 0, 0);
-  // nitidez leve: máscara de nitidez (original menos versão borrada)
   const bl = document.createElement("canvas"); bl.width = W; bl.height = H;
   const bx = bl.getContext("2d"); bx.filter = "blur(2px)"; bx.drawImage(c, 0, 0);
   const A = x.getImageData(0, 0, W, H).data, B = bx.getImageData(0, 0, W, H).data, o = new Uint8ClampedArray(A.length);
   let after = 0;
-  for (let i = 0; i < A.length; i += 4) { for (let j = 0; j < 3; j++) o[i + j] = A[i + j] + 0.5 * (A[i + j] - B[i + j]); o[i + 3] = 255; }
-  for (let i = 0; i < o.length; i += 4) after += 0.299 * o[i] + 0.587 * o[i + 1] + 0.114 * o[i + 2];
+  for (let i = 0; i < A.length; i += 4) {
+    const gy = 0.299 * A[i] + 0.587 * A[i + 1] + 0.114 * A[i + 2];
+    for (let j = 0; j < 3; j++) o[i + j] = gy + (A[i + j] - gy) * (1 + 0.25 * k) + 0.8 * k * (A[i + j] - B[i + j]); // saturação + nitidez
+    o[i + 3] = 255;
+    after += 0.299 * o[i] + 0.587 * o[i + 1] + 0.114 * o[i + 2];
+  }
   after /= n;
   if (after < 5) throw new Error("o ajuste deixou a foto escura demais; nada foi salvo");
   x.putImageData(new ImageData(o, W, H), 0, 0);
@@ -545,19 +555,34 @@ async function autoAdjust(blob) {
 }
 async function adjustPhoto(id, ev) {
   try {
-    
     const r = await fetch(apiBase() + "/api/admin/original?id=" + encodeURIComponent(id), { headers: { Authorization: "Bearer " + (localStorage.getItem("ns_key") || "") } });
     if (!r.ok) throw new Error("não consegui baixar a foto (" + r.status + ")");
-    const orig = await r.blob(), adjRes = await autoAdjust(orig), adjusted = adjRes.dataUrl;
+    const orig = await r.blob(), u = URL.createObjectURL(orig), im = await img(u);
     const dlg = document.createElement("dialog"); dlg.className = "pmenu";
-    dlg.innerHTML = `<p><b>Ajuste automático</b></p><p class="mute">Brilho médio: ${Math.round(adjRes.before)} → ${Math.round(adjRes.after)}</p><div class="pm-pair"><figure><img src="${URL.createObjectURL(orig)}" alt=""><figcaption>Antes</figcaption></figure><figure><img src="${adjusted}" alt=""><figcaption>Depois</figcaption></figure></div><div class="pm-btns"><button type="button" data-a="save">Salvar no Drive</button><button type="button" data-a="cancel">Cancelar</button></div>`;
-    document.body.appendChild(dlg); dlg.addEventListener("close", () => dlg.remove()); dlg.showModal();
+    dlg.innerHTML = `<p><b>Ajuste automático</b></p><p class="mute" id="pa-st"></p>
+      <label class="pm-range">Intensidade: <span id="pa-v">60</span>%<input type="range" id="pa-r" min="0" max="100" value="60"></label>
+      <div class="pm-pair"><figure><img src="${u}" alt=""><figcaption>Antes</figcaption></figure><figure><img id="pa-after" alt=""><figcaption>Depois</figcaption></figure></div>
+      <div class="pm-btns"><button type="button" data-a="save">Salvar no Drive</button><button type="button" data-a="cancel">Cancelar</button></div>`;
+    document.body.appendChild(dlg); dlg.addEventListener("close", () => { dlg.remove(); URL.revokeObjectURL(u); }); dlg.showModal();
+    const $r = dlg.querySelector("#pa-r"), st = dlg.querySelector("#pa-st"), after = dlg.querySelector("#pa-after");
+    const preview = () => {
+      const k = Number($r.value) / 100; dlg.querySelector("#pa-v").textContent = $r.value;
+      try {
+        const p = renderAdjust(im, k, 900); after.src = p.dataUrl;
+        st.textContent = `Brilho médio: ${Math.round(p.before)} → ${Math.round(p.after)}`;
+      } catch (err) { st.textContent = err.message; }
+    };
+    $r.oninput = preview; preview();
     dlg.onclick = async e => {
       const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return;
       if (a === "cancel") return dlg.close();
       if (a === "save") {
         if (!confirm("Substituir a foto no Drive pela versão ajustada? A original fica só no seu cartão.")) return;
-        try { await adminFetch("/api/admin/photo", { method: "POST", body: JSON.stringify({ action: "replace", fileId: id, data: adjusted }) }); alert("Foto ajustada e salva. A miniatura pode demorar a atualizar."); dlg.close(); } catch (err) { alert(err.message); }
+        try {
+          const full = renderAdjust(im, Number($r.value) / 100, 0);       // versão em tamanho real
+          await adminFetch("/api/admin/photo", { method: "POST", body: JSON.stringify({ action: "replace", fileId: id, data: full.dataUrl }) });
+          dlg.close(); alert("Foto ajustada e salva. A miniatura pode demorar a atualizar.");
+        } catch (err) { alert(err.message); }
       }
     };
   } catch (err) { alert(err.message); }
