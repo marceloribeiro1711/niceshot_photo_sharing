@@ -384,7 +384,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.33"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.34"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -505,52 +505,41 @@ async function adminFetch(path, opt = {}) {
 // menu da foto no admin: ocultar, ajustar automaticamente ou apagar de vez
 function photoMenu(d, ev) {
   const id = d.dataset.f, dlg = document.createElement("dialog"); dlg.className = "pmenu";
-  dlg.innerHTML = `<p><b>Foto</b></p><div class="pm-btns"><button type="button" data-a="hide">Ocultar do álbum</button><button type="button" data-a="adjust">Ajuste automático</button><button type="button" data-a="delete" class="danger">Mover para a lixeira</button><button type="button" data-a="close">Fechar</button></div>`;
+  dlg.innerHTML = `<p><b>Foto</b></p><div class="pm-btns"><button type="button" data-a="hide">Ocultar do álbum</button><button type="button" data-a="adjust">Ajuste automático</button><button type="button" data-a="close">Fechar</button></div>`;
   document.body.appendChild(dlg); dlg.addEventListener("close", () => dlg.remove()); dlg.showModal();
   const end = () => { dlg.close(); };
   dlg.onclick = async e => {
     const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return;
     if (a === "close") return end();
     if (a === "hide") { if (!confirm("Ocultar esta foto do álbum?")) return; try { await put(ev.id, { hideFile: id }); d.remove(); alert("Foto oculta."); end(); } catch (err) { alert(err.message); } return; }
-    if (a === "delete") { if (!confirm("Mover esta foto para a lixeira do Drive? Ela pode ser recuperada por 30 dias.")) return; try { await adminFetch("/api/admin/photo", { method: "POST", body: JSON.stringify({ action: "delete", fileId: id }) }); d.remove(); alert("Foto movida para a lixeira do Drive."); end(); } catch (err) { alert(err.message); } return; }
     if (a === "adjust") { end(); await adjustPhoto(id, ev); }
   };
 }
 // ajuste automático: níveis de luz e contraste (no navegador, sem serviço externo); mostra antes e depois
-// ajuste: níveis de luz, contraste em S, saturação e nitidez; k = intensidade (0 a 1); maxW reduz para a prévia
-function renderAdjust(im, k, maxW) {
+// ajuste manual: brilho, contraste, vibração e temperatura (valores de -1 a 1; 0 = original)
+function renderEdit(im, p, maxW) {
   const sc = maxW && im.naturalWidth > maxW ? maxW / im.naturalWidth : 1;
-  const W = Math.round(im.naturalWidth * sc), H = Math.round(im.naturalHeight * sc);
+  const W = Math.round(im.naturalWidth * sc), H = Math.round(im.naturalHeight * sc), n = W * H;
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d"); x.drawImage(im, 0, 0, W, H);
-  const d = x.getImageData(0, 0, W, H), px = d.data, n = W * H, hist = new Uint32Array(256); let before = 0;
-  for (let i = 0; i < px.length; i += 4) { const v = Math.round(0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]); hist[v]++; before += v; }
-  before /= n;
-  const pct = q => { let acc = 0; for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= q * n) return v; } return 255; };
-  const lo = pct(0.01), hi = pct(0.99), kk = 255 / Math.max(1, hi - lo);
-  const gamma = before < 110 ? 0.8 : before > 170 ? 1.15 : 1;
-  const lut = new Uint8Array(256);
-  for (let v = 0; v < 256; v++) {
-    const lv = Math.pow(Math.min(1, Math.max(0, (v - lo) * kk / 255)), gamma) * 255;
-    const t = (v + k * (lv - v)) / 255;                       // força do ajuste de níveis
-    const sc2 = t * (1 - 0.3 * k) + 0.3 * k * t * t * (3 - 2 * t); // curva em S (contraste)
-    lut[v] = Math.round(255 * Math.min(1, Math.max(0, sc2)));
+  const d = x.getImageData(0, 0, W, H), px = d.data; let before = 0, after = 0;
+  const cf = 1 + p.c * 0.6;                       // contraste em torno do meio-cinza
+  for (let i = 0; i < px.length; i += 4) {
+    let r = px[i], g = px[i + 1], bl = px[i + 2];
+    before += 0.299 * r + 0.587 * g + 0.114 * bl;
+    r += p.b * 60; g += p.b * 60; bl += p.b * 60;                       // brilho
+    r = (r - 128) * cf + 128; g = (g - 128) * cf + 128; bl = (bl - 128) * cf + 128; // contraste
+    r += p.t * 25; bl -= p.t * 25;                                       // temperatura (quente = mais vermelho)
+    const lum = 0.299 * r + 0.587 * g + 0.114 * bl;
+    const mx = Math.max(r, g, bl), mn = Math.min(r, g, bl), sat = (mx - mn) / 255;
+    const vf = 1 + p.v * 0.8 * (1 - sat);                               // vibração: poupa cores já fortes
+    r = lum + (r - lum) * vf; g = lum + (g - lum) * vf; bl = lum + (bl - lum) * vf;
+    px[i] = Math.min(255, Math.max(0, r)); px[i + 1] = Math.min(255, Math.max(0, g)); px[i + 2] = Math.min(255, Math.max(0, bl));
+    after += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
   }
-  for (let i = 0; i < px.length; i += 4) { px[i] = lut[px[i]]; px[i + 1] = lut[px[i + 1]]; px[i + 2] = lut[px[i + 2]]; }
-  x.putImageData(d, 0, 0);
-  const bl = document.createElement("canvas"); bl.width = W; bl.height = H;
-  const bx = bl.getContext("2d"); bx.filter = "blur(2px)"; bx.drawImage(c, 0, 0);
-  const A = x.getImageData(0, 0, W, H).data, B = bx.getImageData(0, 0, W, H).data, o = new Uint8ClampedArray(A.length);
-  let after = 0;
-  for (let i = 0; i < A.length; i += 4) {
-    const gy = 0.299 * A[i] + 0.587 * A[i + 1] + 0.114 * A[i + 2];
-    for (let j = 0; j < 3; j++) o[i + j] = gy + (A[i + j] - gy) * (1 + 0.25 * k) + 0.8 * k * (A[i + j] - B[i + j]); // saturação + nitidez
-    o[i + 3] = 255;
-    after += 0.299 * o[i] + 0.587 * o[i + 1] + 0.114 * o[i + 2];
-  }
-  after /= n;
+  before /= n; after /= n;
   if (after < 5) throw new Error("o ajuste deixou a foto escura demais; nada foi salvo");
-  x.putImageData(new ImageData(o, W, H), 0, 0);
+  x.putImageData(d, 0, 0);
   return { dataUrl: c.toDataURL("image/jpeg", 0.92), before, after };
 }
 async function adjustPhoto(id, ev) {
@@ -559,32 +548,40 @@ async function adjustPhoto(id, ev) {
     if (!r.ok) throw new Error("não consegui baixar a foto (" + r.status + ")");
     const orig = await r.blob(), u = URL.createObjectURL(orig), im = await img(u);
     const dlg = document.createElement("dialog"); dlg.className = "pmenu";
-    dlg.innerHTML = `<p><b>Ajuste automático</b></p><p class="mute" id="pa-st"></p>
-      <label class="pm-range">Intensidade: <span id="pa-v">60</span>%<input type="range" id="pa-r" min="0" max="100" value="60"></label>
+    const sl = (k, label, lo, hi) => `<label class="pm-range">${label}: <span id="v-${k}">0</span><input type="range" id="r-${k}" min="${lo}" max="${hi}" value="0"></label>`;
+    dlg.innerHTML = `<p><b>Ajuste da foto</b></p><p class="mute" id="pa-st"></p>
+      ${sl("b", "Brilho", -100, 100)}${sl("c", "Contraste", -100, 100)}${sl("v", "Vibração", -100, 100)}${sl("t", "Temperatura (frio ↔ quente)", -100, 100)}
       <div class="pm-pair"><figure><img src="${u}" alt=""><figcaption>Antes</figcaption></figure><figure><img id="pa-after" alt=""><figcaption>Depois</figcaption></figure></div>
-      <div class="pm-btns"><button type="button" data-a="save">Salvar no Drive</button><button type="button" data-a="cancel">Cancelar</button></div>`;
+      <div class="pm-btns"><button type="button" data-a="auto">Sugestão automática</button><button type="button" data-a="reset">Voltar ao original</button><button type="button" data-a="save">Salvar no Drive</button><button type="button" data-a="cancel">Cancelar</button></div>`;
     document.body.appendChild(dlg); dlg.addEventListener("close", () => { dlg.remove(); URL.revokeObjectURL(u); }); dlg.showModal();
-    const $r = dlg.querySelector("#pa-r"), st = dlg.querySelector("#pa-st"), after = dlg.querySelector("#pa-after");
+    const val = k => Number(dlg.querySelector("#r-" + k).value) / 100;
+    const setVals = o => { for (const k of ["b", "c", "v", "t"]) { const el = dlg.querySelector("#r-" + k); el.value = Math.round((o[k] || 0) * 100); dlg.querySelector("#v-" + k).textContent = el.value; } };
+    const params = () => ({ b: val("b"), c: val("c"), v: val("v"), t: val("t") });
     const preview = () => {
-      const k = Number($r.value) / 100; dlg.querySelector("#pa-v").textContent = $r.value;
-      try {
-        const p = renderAdjust(im, k, 900); after.src = p.dataUrl;
-        st.textContent = `Brilho médio: ${Math.round(p.before)} → ${Math.round(p.after)}`;
-      } catch (err) { st.textContent = err.message; }
+      for (const k of ["b", "c", "v", "t"]) dlg.querySelector("#v-" + k).textContent = dlg.querySelector("#r-" + k).value;
+      const st = dlg.querySelector("#pa-st");
+      try { const p = renderEdit(im, params(), 900); dlg.querySelector("#pa-after").src = p.dataUrl; st.textContent = `Brilho médio: ${Math.round(p.before)} → ${Math.round(p.after)}`; }
+      catch (err) { st.textContent = err.message; }
     };
-    $r.oninput = preview; preview();
+    for (const k of ["b", "c", "v", "t"]) dlg.querySelector("#r-" + k).oninput = preview;
+    // sugestão: clareia um pouco fotos escuras e dá contraste e cor leves
+    const bright = await new Promise(res => { const cv = document.createElement("canvas"); cv.width = 64; cv.height = 64 * im.naturalHeight / im.naturalWidth; const g = cv.getContext("2d"); g.drawImage(im, 0, 0, cv.width, cv.height); const dd = g.getImageData(0, 0, cv.width, cv.height).data; let s2 = 0; for (let i = 0; i < dd.length; i += 4) s2 += 0.299 * dd[i] + 0.587 * dd[i + 1] + 0.114 * dd[i + 2]; res(s2 / (dd.length / 4)); });
+    const SUG = { b: bright < 110 ? 0.15 : 0, c: 0.2, v: 0.25, t: 0 };
     dlg.onclick = async e => {
       const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return;
       if (a === "cancel") return dlg.close();
+      if (a === "reset") { setVals({}); return preview(); }
+      if (a === "auto") { setVals(SUG); return preview(); }
       if (a === "save") {
         if (!confirm("Substituir a foto no Drive pela versão ajustada? A original fica só no seu cartão.")) return;
         try {
-          const full = renderAdjust(im, Number($r.value) / 100, 0);       // versão em tamanho real
+          const full = renderEdit(im, params(), 0);
           await adminFetch("/api/admin/photo", { method: "POST", body: JSON.stringify({ action: "replace", fileId: id, data: full.dataUrl }) });
           dlg.close(); alert("Foto ajustada e salva. A miniatura pode demorar a atualizar.");
         } catch (err) { alert(err.message); }
       }
     };
+    preview();
   } catch (err) { alert(err.message); }
 }
 
