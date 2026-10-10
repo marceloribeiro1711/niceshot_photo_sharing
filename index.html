@@ -130,6 +130,10 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 #brand{display:flex;justify-content:center;align-items:center;padding:8px 0 4px;background:var(--bg);flex:0 0 auto}
 #brand img{height:clamp(44px,7vh,64px);width:auto;display:block}
 #brand[hidden]{display:none}
+#x-dp{padding:0;width:min(96vw,640px);max-height:92vh;border-radius:12px;background:var(--card);color:var(--ink);border:1px solid var(--line)}
+#x-dp form{display:flex;flex-direction:column;max-height:92vh;padding:14px;box-sizing:border-box}
+#x-dp #x-pg{flex:1 1 auto;min-height:0;overflow-y:auto;margin:8px 0}
+#x-dp .row{flex:0 0 auto;padding-top:8px;background:var(--card)}
 </style>
 </head>
 <body>
@@ -384,7 +388,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.35"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.36"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
