@@ -43,6 +43,7 @@ main{flex:1;min-height:0;overflow-y:auto;width:100%;max-width:720px;margin:0 aut
 .k{position:absolute;top:4px;right:4px;width:30px;min-height:30px;height:30px;padding:0;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);color:#fff;font-weight:700}
 .t.on img{outline:3px solid var(--blue);outline-offset:-3px}
 .t.on .k{background:var(--blue)}
+.t.on::after{content:"";position:absolute;inset:0;border:3px solid var(--blue);border-radius:4px;pointer-events:none}
 .prog{margin:8px 0;padding:10px;border-radius:8px;background:var(--card);border:1px solid var(--line)}
 .prog i{display:block;height:6px;margin-top:6px;background:var(--blue);border-radius:3px;width:0}
 #home{margin:0 -14px;height:100%;display:flex;flex-direction:column}
@@ -70,7 +71,7 @@ main{flex:1;min-height:0;overflow-y:auto;width:100%;max-width:720px;margin:0 aut
 .info h2{margin:0 0 4px;font-size:24px;line-height:1.2}
 .meta{color:var(--mute);font-size:15px}
 a{color:var(--blue)}
-#dots{display:flex;justify-content:center;gap:6px;padding:6px 0 8px}
+#dots{display:flex;justify-content:center;gap:6px;padding:12px 0 14px}
 #dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
 #dots i.on{background:var(--blue)}
 #vw{flex:1;min-height:0;position:relative;background:#000;display:flex;align-items:center;justify-content:center}
@@ -119,9 +120,20 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 .tabs{display:flex;gap:8px;margin:8px 0 10px}
 .tabs .tab{flex:1;min-height:44px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:15px}
 .tabs .tab.on{border-color:var(--ink);font-weight:600}
+.pmenu{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:16px;max-width:92vw}
+.pm-btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.pm-btns button{min-height:44px}
+.pm-btns .danger{color:var(--red)}
+.pm-pair{display:flex;gap:8px}
+.pm-pair figure{flex:1;margin:0;text-align:center;font-size:12px}
+.pm-pair img{width:100%;border-radius:8px}
+#brand{display:flex;justify-content:center;align-items:center;padding:8px 0 4px;background:var(--bg);flex:0 0 auto}
+#brand img{height:clamp(44px,7vh,64px);width:auto;display:block}
+#brand[hidden]{display:none}
 </style>
 </head>
 <body>
+<div id="brand"><img src="logo.png" alt="NiceShot sports photography"></div>
 <header><h1 id="ti">Photo Sharing</h1><a class="hb" id="igh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/></svg><span data-t="contact"></span></a></header>
 <main>
   <section id="home"><div id="car"></div><div id="dots"></div><div id="appver"></div></section>
@@ -231,6 +243,12 @@ const DICT = {
   prep: ["Preparing the photo presentation", "Preparando a apresentação das fotos", "Preparando la presentación de las fotos", "Préparation du diaporama des photos"],
   svc_off: ["Photo search unavailable. Try again later", "Busca por selfie indisponível. Tente mais tarde", "Búsqueda por selfie no disponible. Inténtalo más tarde", "Recherche par selfie indisponible. Réessayez plus tard"],
   none_event: ["We didn't find photos of you in this event.", "Não encontramos fotos suas neste evento", "No encontramos fotos tuyas en este evento", "Nous n'avons pas trouvé de photos de vous dans cet événement"],
+  disclaimer: ["Always check all the photos. Some of your photos may not be identified by the selfies. If another player shows up in your photos, try again with a better selfie.", "Sempre verifique todas as fotos. Algumas fotos suas podem não ser identificadas pelas selfies. Se outro jogador aparecer nas suas fotos, tente com outra selfie melhor.", "Revisa siempre todas las fotos. Algunas fotos tuyas pueden no identificarse con las selfies. Si aparece otro jugador en tus fotos, prueba con una selfie mejor.", "Vérifiez toujours toutes les photos. Certaines de vos photos peuvent ne pas être reconnues par les selfies. Si un autre joueur apparaît dans vos photos, réessayez avec un meilleur selfie."],
+  pf_far: ["Come closer: your face should fill more of the photo.", "Chegue mais perto: o rosto precisa ocupar mais da foto.", "Acércate más: tu cara debe ocupar más de la foto.", "Approchez-vous : votre visage doit occuper plus de la photo."],
+  pf_side: ["Look straight at the camera.", "Olhe de frente para a câmera.", "Mira de frente a la cámara.", "Regardez droit vers l'objectif."],
+  pf_dark: ["Too dark. Find a brighter spot.", "Foto escura. Procure um lugar mais iluminado.", "Foto oscura. Busca un lugar más iluminado.", "Trop sombre. Cherchez un endroit plus éclairé."],
+  pf_bright: ["Too bright. Avoid backlight.", "Foto muito clara. Evite contraluz.", "Foto muy clara. Evita el contraluz.", "Trop lumineux. Évitez le contre-jour."],
+  pf_blur: ["Blurry photo. Hold the phone steady and try again.", "Foto tremida. Segure o celular firme e tire de novo.", "Foto movida. Sujeta bien el celular y vuelve a intentar.", "Photo floue. Tenez le téléphone bien stable et réessayez."],
   my_selfie: ["My Selfie", "Minha Selfie", "Mi selfie", "Mon selfie"],
   front: ["Front Selfie", "Selfie de Frente", "Selfie de frente", "Selfie de face"],
   left: ["Left Profile Selfie", "Selfie Perfil Esquerdo", "Selfie perfil izquierdo", "Selfie profil gauche"],
@@ -259,7 +277,7 @@ const updDl = () => { $("#dl").hidden = S.info?.allowDownload === false; $("#dl"
 function show(id) {
   for (const s of ["home", "pinbox", "album", "adm", "prof"]) $("#" + s).hidden = s !== id;
   $("#vw").hidden = true; $("main").hidden = false; setZm(false);
-  $("#bd").hidden = !["pinbox", "adm", "prof"].includes(id); $("#igh").hidden = id !== "home"; $("#hd").hidden = id !== "home"; $("#ad").hidden = id !== "album";
+  $("#bd").hidden = !["pinbox", "adm", "prof"].includes(id); $("#igh").hidden = id !== "home"; $("#hd").hidden = id !== "home"; $("#ad").hidden = id !== "album"; $("#brand").hidden = id !== "home";
   $("#ti").textContent = id === "adm" ? "Admin" : id === "prof" ? tr("my_selfie") : id === "album" && S.ev ? S.ev.name : "Photo Sharing";
 }
 
@@ -318,19 +336,39 @@ $("#pfl").onclick = e => {
   if (pfBusy) { say(tr("pf_check")); return; } // enquanto uma foto é guardada, ignora outros toques
   pfSlot = b.dataset.s; $("#pffile").dataset.slot = pfSlot; $("#pfe").textContent = ""; $("#pffile").click();
 };
+// brilho médio e nitidez da foto (em miniatura)
+function photoQuality(im) {
+  const W = 160, H = Math.max(1, Math.round(160 * (im.naturalHeight || im.height) / (im.naturalWidth || im.width)));
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"); x.drawImage(im, 0, 0, W, H);
+  const d = x.getImageData(0, 0, W, H).data, g = new Float32Array(W * H); let sum = 0;
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) { const v = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; g[p] = v; sum += v; }
+  let lap = 0, n = 0;
+  for (let y = 1; y < H - 1; y++) for (let k = 1; k < W - 1; k++) { const p = y * W + k, l = 4 * g[p] - g[p - 1] - g[p + 1] - g[p - W] - g[p + W]; lap += l * l; n++; }
+  return { mean: sum / (W * H), sharp: n ? lap / n : 999 };
+}
 async function pfCheck(blob, slot) { // confere a foto no próprio aparelho; devolve a chave do erro ou null
-  let res;
+  let res, q, imW;
   try {
     say(tr(faceReady ? "pf_check" : "face_prep")); await loadFace();
     const u = URL.createObjectURL(blob), im = await img(u); URL.revokeObjectURL(u);
+    imW = im.naturalWidth || im.width; q = photoQuality(im);
     res = await faceapi.detectAllFaces(im, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })).withFaceLandmarks().withFaceDescriptors();
   } catch { return null; } // sem o modelo (ex.: sem internet) a foto não é bloqueada
   const area = r => r.detection.box.width * r.detection.box.height, side = slot === "left" || slot === "right";
   res.sort((a, b) => area(b) - area(a));
-  if (!res.length) return side ? null : "pf_none"; // perfis laterais nem sempre são detectados: não bloqueia
+  if (!res.length) return "pf_none"; // foto de costas ou sem rosto: não aceita
   if (res.length > 1 && area(res[1]) >= 0.3 * area(res[0])) return "pf_multi";
+  const main = res[0], box = main.detection.box;
+  if (box.width / imW < 0.18) return "pf_far";
+  if (q.mean < 60) return "pf_dark";
+  if (q.mean > 215) return "pf_bright";
+  if (q.sharp < 40) return "pf_blur";
   if (!side) {
-    await pput("d_" + slot, Array.from(res[0].descriptor));
+    const eyes = [...main.landmarks.getLeftEye(), ...main.landmarks.getRightEye()], nose = main.landmarks.getNose();
+    const ex = eyes.reduce((a, p) => a + p.x, 0) / eyes.length, nx = nose.reduce((a, p) => a + p.x, 0) / nose.length;
+    if (Math.abs(nx - ex) / box.width > 0.12) return "pf_side"; // selfie de frente: olhar para a câmera
+    await pput("d_" + slot, Array.from(main.descriptor));
   }
   return null;
 }
@@ -346,7 +384,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.22"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.28"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -365,7 +403,7 @@ async function api(path, opt = {}) {
 }
 const put = (id, body) => api("/api/admin/events/" + id, { method: "PUT", body: JSON.stringify(body) });
 
-const NEED = "2026-10-07-a"; // versão do Worker que esta página espera
+const NEED = "2026-10-10-b"; // versão do Worker que esta página espera
 async function checkVer() {
   try {
     const v = await (await fetch(base() + "/api/health")).json();
@@ -455,10 +493,60 @@ async function preview(ev) {
         } catch (err) { say(err.message); }
         return;
       }
-      const d = e.target.closest("[data-f]"); if (!d || !confirm("Ocultar esta foto do álbum?")) return;
-      try { await put(ev.id, { hideFile: d.dataset.f }); d.remove(); say("Foto oculta."); } catch (err) { say(err.message); }
+      const d = e.target.closest("[data-f]"); if (d) photoMenu(d, ev);
     };
   } catch (err) { $("#x-pc").textContent = ""; $("#x-pg").innerHTML = `<p class="mute">${esc(err.message)}</p>`; }
+}
+
+async function adminFetch(path, opt = {}) {
+  const r = await fetch(apiBase() + path, { ...opt, headers: { "Content-Type": "application/json", Authorization: "Bearer " + (localStorage.getItem("ns_key") || "") } });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || j.message || ("erro " + r.status)); return j;
+}
+// menu da foto no admin: ocultar, ajustar automaticamente ou apagar de vez
+function photoMenu(d, ev) {
+  const id = d.dataset.f, dlg = document.createElement("dialog"); dlg.className = "pmenu";
+  dlg.innerHTML = `<p><b>Foto</b></p><div class="pm-btns"><button type="button" data-a="hide">Ocultar do álbum</button><button type="button" data-a="adjust">Ajuste automático</button><button type="button" data-a="delete" class="danger">Apagar de vez</button><button type="button" data-a="close">Fechar</button></div>`;
+  document.body.appendChild(dlg); dlg.addEventListener("close", () => dlg.remove()); dlg.showModal();
+  const end = () => { dlg.close(); };
+  dlg.onclick = async e => {
+    const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return;
+    if (a === "close") return end();
+    if (a === "hide") { if (!confirm("Ocultar esta foto do álbum?")) return; try { await put(ev.id, { hideFile: id }); d.remove(); say("Foto oculta."); end(); } catch (err) { say(err.message); } return; }
+    if (a === "delete") { if (!confirm("Apagar esta foto de vez do Drive? Não tem como desfazer.")) return; try { await adminFetch("/api/admin/photo", { method: "POST", body: JSON.stringify({ action: "delete", fileId: id }) }); d.remove(); say("Foto apagada."); end(); } catch (err) { say(err.message); } return; }
+    if (a === "adjust") { end(); await adjustPhoto(id, ev); }
+  };
+}
+// ajuste automático: níveis de luz e contraste (no navegador, sem serviço externo); mostra antes e depois
+async function autoAdjust(blob) {
+  const u = URL.createObjectURL(blob), im = await img(u); URL.revokeObjectURL(u);
+  const W = im.naturalWidth, H = im.naturalHeight, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"); x.drawImage(im, 0, 0);
+  const d = x.getImageData(0, 0, W, H), px = d.data, n = W * H, hist = new Uint32Array(256);
+  for (let i = 0; i < px.length; i += 4) hist[Math.round(0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2])]++;
+  const pct = q => { let acc = 0; for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= q * n) return v; } return 255; };
+  const lo = pct(0.005), hi = pct(0.995), k = 255 / Math.max(1, hi - lo);
+  for (let i = 0; i < px.length; i += 4) for (let j = 0; j < 3; j++) px[i + j] = Math.min(255, Math.max(0, (px[i + j] - lo) * k));
+  x.putImageData(d, 0, 0);
+  return c.toDataURL("image/jpeg", 0.92);
+}
+async function adjustPhoto(id, ev) {
+  try {
+    say("Preparando o ajuste…");
+    const r = await fetch(apiBase() + "/api/admin/original?id=" + encodeURIComponent(id), { headers: { Authorization: "Bearer " + (localStorage.getItem("ns_key") || "") } });
+    if (!r.ok) throw new Error("não consegui baixar a foto (" + r.status + ")");
+    const orig = await r.blob(), adjusted = await autoAdjust(orig);
+    const dlg = document.createElement("dialog"); dlg.className = "pmenu";
+    dlg.innerHTML = `<p><b>Ajuste automático</b></p><div class="pm-pair"><figure><img src="${URL.createObjectURL(orig)}" alt=""><figcaption>Antes</figcaption></figure><figure><img src="${adjusted}" alt=""><figcaption>Depois</figcaption></figure></div><div class="pm-btns"><button type="button" data-a="save">Salvar no Drive</button><button type="button" data-a="cancel">Cancelar</button></div>`;
+    document.body.appendChild(dlg); dlg.addEventListener("close", () => dlg.remove()); dlg.showModal();
+    dlg.onclick = async e => {
+      const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return;
+      if (a === "cancel") return dlg.close();
+      if (a === "save") {
+        if (!confirm("Substituir a foto no Drive pela versão ajustada? A original fica só no seu cartão.")) return;
+        try { await adminFetch("/api/admin/photo", { method: "POST", body: JSON.stringify({ action: "replace", fileId: id, data: adjusted }) }); say("Foto ajustada e salva. A miniatura pode demorar a atualizar."); dlg.close(); } catch (err) { say(err.message); }
+      }
+    };
+  } catch (err) { say(err.message); }
 }
 
 $("#x-cfg").onclick = () => {
@@ -514,7 +602,7 @@ async function openAlbum() {
 const view = () => S.tab === "mine" ? (S.mine ? S.photos.filter(p => S.mine.has(p.id)) : []) : S.photos;
 const dmy = d => d.split("-").reverse().join("/");
 const waitMsg = () => {
-  if (S.tab === "mine") return S.mineState === "error" ? tr("svc_off") + (S.dbg ? " [" + S.dbg + "]" : "") : (S.mineState === "done" || S.mineState === "nomatch") ? tr("none_event") : "";
+  if (S.tab === "mine") return S.mineState === "searching" ? tr("disclaimer") : S.mineState === "error" ? tr("svc_off") + (S.dbg ? " [" + S.dbg + "]" : "") : (S.mineState === "done" || S.mineState === "nomatch") ? tr("none_event") : "";
   const f = S.info?.dateFrom, hoje = new Date().toLocaleDateString("sv");
   return f && f > hoje ? `${tr("avail_from", { d: fmtDate(f) })}` : tr("none_yet");
 };
@@ -568,10 +656,10 @@ function toggleSel(id) {
   else S.sel.add(id);
   return true;
 }
+// tocar na miniatura marca/desmarca para download; para ampliar use o botão Ampliar foto
 $("#gr").onclick = e => {
-  const t = e.target.closest(".t"); if (!t) return; const id = t.dataset.id;
-  if (e.target.closest(".k")) { toggleSel(id); return draw(); }
-  S.idx = Number(t.dataset.i); openViewer();
+  const t = e.target.closest(".t"); if (!t || S.info?.allowDownload === false) return;
+  if (toggleSel(t.dataset.id)) draw();
 };
 const firstVisible = () => { const top = $("main").getBoundingClientRect().top, t = [...document.querySelectorAll("#gr .t")].find(x => x.getBoundingClientRect().bottom > top + 8); return t ? Number(t.dataset.i) : -1; };
 $("#zm").onclick = () => { if (!$("#vw").hidden) return closeViewer(); S.idx = firstVisible(); if (S.idx >= 0) openViewer(); };
@@ -700,7 +788,7 @@ async function openMine() {
   const code = await myCode();
   const st = await selfieStatus(code);
   if (st.state === "none") return startSearch();
-  if (st.state === "pending" || st.state === "processing") { S.busy = true; const w = await waitFor(code); if (w) applyResult(w, true); else S.busy = false; return; }
+  if (st.state === "pending" || st.state === "processing") { S.busy = true; S.mineState = "searching"; draw(); const w = await waitFor(code); if (w) applyResult(w, true); else S.busy = false; return; }
   applyResult(st, true);
 }
 

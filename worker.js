@@ -4,15 +4,15 @@
 // Bindings necessários:
 //   KV   EVENTS            (armazena eventos, PINs e a pasta global do Drive)
 //   DO   FILA              (correio da busca por selfie; criado sozinho pelo wrangler.jsonc, nada a fazer no painel)
-//   Secrets: GOOGLE_API_KEY, ADMIN_KEY, TOKEN_SECRET, MAC_KEY (senha do Photo Server no Mac)
+//   Secrets: GOOGLE_API_KEY, ADMIN_KEY, TOKEN_SECRET, MAC_KEY (senha do Photo Server no Mac), DRIVE_SA (JSON da conta de serviço, para apagar e salvar fotos)
 //   Var:     ALLOWED_ORIGIN (ex.: https://niceshot.meudominio.com — vários separados por vírgula)
 
 import { DurableObject } from "cloudflare:workers";
 
-const BUILD = "2026-10-07-a"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
+const BUILD = "2026-10-10-b"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
 const DRIVE = "https://www.googleapis.com/drive/v3";
 const TOKEN_TTL = 60 * 60 * 24 * 3; // sessão do visitante: 3 dias
-const LIST_TTL = 60; // cache da listagem de fotos (segundos)
+const LIST_TTL = 300; // cache da listagem de fotos (segundos): 5 min, compartilhado por região
 const PIN_ALPHABET = "0123456789"; // PIN de 4 dígitos
 const ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 const MAX_DRIVE_CALLS = 45; // proteção contra o limite de subrequisições do Worker
@@ -162,6 +162,8 @@ async function admin(req, env, p, m) {
   await limit(req, "admin", 30, 60);
   const auth = req.headers.get("Authorization") || "";
   if (!env.ADMIN_KEY || !safeEqual(auth, `Bearer ${env.ADMIN_KEY}`)) throw new HttpError(401, "não autorizado");
+  if (p === "/api/admin/photo" && m === "POST") return adminPhoto(req, env);
+  if (p === "/api/admin/original" && m === "GET") return adminOriginal(env, new URL(req.url));
   let r;
 
   if (p === "/api/admin/events" && m === "GET") {
@@ -538,6 +540,55 @@ export class Fila extends DurableObject {
     this.sql.exec("update req set state=?, ids=?, lease=0, updated=? where code=?", state, JSON.stringify(ids), Date.now(), code);
     return { ok: true };
   }
+}
+
+/* ---------------- admin: apagar e salvar fotos no Drive (conta de serviço) ---------------- */
+const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+
+async function driveToken(env) {
+  if (!env.DRIVE_SA) throw new HttpError(503, "conta de serviço do Drive não configurada (DRIVE_SA)");
+  const sa = JSON.parse(env.DRIVE_SA), now = Math.floor(Date.now() / 1000);
+  const head = b64u(enc.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const claim = b64u(enc.encode(JSON.stringify({ iss: sa.client_email, scope: "https://www.googleapis.com/auth/drive", aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 })));
+  const der = Uint8Array.from(atob(sa.private_key.replace(/-----[^-]+-----/g, "").replace(/\s/g, "")), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, enc.encode(head + "." + claim));
+  const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: `${head}.${claim}.${b64u(sig)}` }) });
+  const j = await r.json();
+  if (!j.access_token) throw new HttpError(502, "o Google recusou a conta de serviço");
+  return j.access_token;
+}
+
+// POST /api/admin/photo  { action: "delete" | "replace", fileId, data? }
+async function adminPhoto(req, env) {
+  const b = await readJson(req), fileId = String(b.fileId || "");
+  if (!/^[\w-]{10,100}$/.test(fileId)) throw new HttpError(400, "foto inválida");
+  const token = await driveToken(env), auth = { Authorization: "Bearer " + token };
+  if (b.action === "delete") {
+    const r = await fetch(`${DRIVE}/files/${fileId}`, { method: "DELETE", headers: auth });
+    if (!r.ok && r.status !== 404) throw new HttpError(502, "o Drive não apagou a foto (" + r.status + ")");
+    return json({ ok: true, deleted: fileId });
+  }
+  if (b.action === "replace") {
+    const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(String(b.data || ""));
+    if (!m) throw new HttpError(400, "imagem inválida");
+    const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+    if (bytes.length > 6000000) throw new HttpError(413, "imagem grande demais");
+    const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=id`, { method: "PATCH", headers: { ...auth, "Content-Type": "image/" + m[1] }, body: bytes });
+    if (!r.ok) throw new HttpError(502, "o Drive não salvou a foto (" + r.status + ")");
+    return json({ ok: true, replaced: fileId });
+  }
+  throw new HttpError(400, "ação inválida");
+}
+
+// GET /api/admin/original?id=  (foto original, para o ajuste automático no navegador do admin)
+async function adminOriginal(env, url) {
+  const id = url.searchParams.get("id") || "";
+  if (!/^[\w-]{10,100}$/.test(id)) throw new HttpError(400, "foto inválida");
+  const up = await fetch(`${DRIVE}/files/${id}?alt=media&key=${env.GOOGLE_API_KEY}`);
+  if (!up.ok) throw new HttpError(502, "não consegui baixar a foto (" + up.status + ")");
+  return new Response(up.body, { headers: { "Content-Type": up.headers.get("Content-Type") || "image/jpeg", "Cache-Control": "no-store" } });
 }
 
 /* ------------------------------ utilitários -------------------------- */
