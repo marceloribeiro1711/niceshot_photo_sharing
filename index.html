@@ -384,7 +384,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.32"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.33"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
@@ -403,7 +403,7 @@ async function api(path, opt = {}) {
 }
 const put = (id, body) => api("/api/admin/events/" + id, { method: "PUT", body: JSON.stringify(body) });
 
-const NEED = "2026-10-10-c"; // versão do Worker que esta página espera
+const NEED = "2026-10-10-d"; // versão do Worker que esta página espera
 async function checkVer() {
   try {
     const v = await (await fetch(base() + "/api/health")).json();
@@ -505,14 +505,14 @@ async function adminFetch(path, opt = {}) {
 // menu da foto no admin: ocultar, ajustar automaticamente ou apagar de vez
 function photoMenu(d, ev) {
   const id = d.dataset.f, dlg = document.createElement("dialog"); dlg.className = "pmenu";
-  dlg.innerHTML = `<p><b>Foto</b></p><div class="pm-btns"><button type="button" data-a="hide">Ocultar do álbum</button><button type="button" data-a="adjust">Ajuste automático</button><button type="button" data-a="delete" class="danger">Apagar de vez</button><button type="button" data-a="close">Fechar</button></div>`;
+  dlg.innerHTML = `<p><b>Foto</b></p><div class="pm-btns"><button type="button" data-a="hide">Ocultar do álbum</button><button type="button" data-a="adjust">Ajuste automático</button><button type="button" data-a="delete" class="danger">Mover para a lixeira</button><button type="button" data-a="close">Fechar</button></div>`;
   document.body.appendChild(dlg); dlg.addEventListener("close", () => dlg.remove()); dlg.showModal();
   const end = () => { dlg.close(); };
   dlg.onclick = async e => {
     const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return;
     if (a === "close") return end();
     if (a === "hide") { if (!confirm("Ocultar esta foto do álbum?")) return; try { await put(ev.id, { hideFile: id }); d.remove(); alert("Foto oculta."); end(); } catch (err) { alert(err.message); } return; }
-    if (a === "delete") { if (!confirm("Apagar esta foto de vez do Drive? Não tem como desfazer.")) return; try { await adminFetch("/api/admin/photo", { method: "POST", body: JSON.stringify({ action: "delete", fileId: id }) }); d.remove(); alert("Foto apagada."); end(); } catch (err) { alert(err.message); } return; }
+    if (a === "delete") { if (!confirm("Mover esta foto para a lixeira do Drive? Ela pode ser recuperada por 30 dias.")) return; try { await adminFetch("/api/admin/photo", { method: "POST", body: JSON.stringify({ action: "delete", fileId: id }) }); d.remove(); alert("Foto movida para a lixeira do Drive."); end(); } catch (err) { alert(err.message); } return; }
     if (a === "adjust") { end(); await adjustPhoto(id, ev); }
   };
 }

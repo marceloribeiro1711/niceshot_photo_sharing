@@ -9,7 +9,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 
-const BUILD = "2026-10-10-c"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
+const BUILD = "2026-10-10-d"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
 const DRIVE = "https://www.googleapis.com/drive/v3";
 const TOKEN_TTL = 60 * 60 * 24 * 3; // sessão do visitante: 3 dias
 const LIST_TTL = 300; // cache da listagem de fotos (segundos): 5 min, compartilhado por região
@@ -591,9 +591,10 @@ async function adminPhoto(req, env) {
   if (!/^[\w-]{10,100}$/.test(fileId)) throw new HttpError(400, "foto inválida");
   const token = await driveToken(env), auth = { Authorization: "Bearer " + token };
   if (b.action === "delete") {
-    const r = await fetch(`${DRIVE}/files/${fileId}`, { method: "DELETE", headers: auth });
-    if (!r.ok && r.status !== 404) throw new HttpError(502, "o Drive não apagou a foto: " + await googleErr(r));
-    return json({ ok: true, deleted: fileId });
+    // editores podem mover para a lixeira (não apagam de vez arquivos de outra conta); a lixeira guarda por 30 dias
+    const r = await fetch(`${DRIVE}/files/${fileId}?supportsAllDrives=true`, { method: "PATCH", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify({ trashed: true }) });
+    if (!r.ok && r.status !== 404) throw new HttpError(502, "o Drive não moveu a foto para a lixeira: " + await googleErr(r));
+    return json({ ok: true, trashed: fileId });
   }
   if (b.action === "replace") {
     const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(String(b.data || ""));
