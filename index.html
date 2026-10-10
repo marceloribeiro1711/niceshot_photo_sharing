@@ -127,7 +127,7 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 .pm-pair{display:flex;gap:8px}
 .pm-pair figure{flex:1;margin:0;text-align:center;font-size:12px}
 .pm-pair img{width:100%;border-radius:8px}
-#brand{display:flex;justify-content:center;align-items:center;padding:0;background:#000;flex:0 0 auto}
+#brand{display:flex;justify-content:center;align-items:center;padding:0;background:var(--bg);flex:0 0 auto}
 #brand img{width:min(62vw,250px);height:auto;display:block}
 #brand[hidden]{display:none}
 #x-dp{padding:0;width:min(96vw,640px);max-height:92vh;border-radius:12px;background:var(--card);color:var(--ink);border:1px solid var(--line)}
@@ -137,9 +137,13 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 .x-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .x-close{min-width:40px;min-height:40px;border:0;background:none;color:var(--ink);font-size:26px;line-height:1}
 #x-pc{display:block;margin:6px 0 4px;font-size:14px}
+#splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#031c38;transition:opacity .4s ease}
+#splash img{width:min(60vw,260px);height:auto;border-radius:22%}
+#splash.off{opacity:0;pointer-events:none}
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true"><img src="icons/icon-512.png" alt=""></div>
 <div id="brand"><img src="logo.png" alt="NiceShot sports photography"></div>
 <header><h1 id="ti">Photo Sharing</h1><a class="hb" id="igh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/></svg><span data-t="contact"></span></a></header>
 <main>
@@ -390,7 +394,10 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.39"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.41";
+(() => { const t0 = performance.now(); const hide = () => { const sp = document.getElementById("splash"); if (!sp) return; sp.classList.add("off"); setTimeout(() => sp.remove(), 450); };
+  const go = () => setTimeout(hide, Math.max(0, 1000 - (performance.now() - t0))); // mantém a abertura por pelo menos 1 s
+  if (document.readyState === "complete") go(); else window.addEventListener("load", go); })(); $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {
