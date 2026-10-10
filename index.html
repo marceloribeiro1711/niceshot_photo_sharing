@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Photo Sharing</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#1f5fbf">
+<meta name="theme-color" content="#031c38">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
@@ -127,8 +127,8 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 .pm-pair{display:flex;gap:8px}
 .pm-pair figure{flex:1;margin:0;text-align:center;font-size:12px}
 .pm-pair img{width:100%;border-radius:8px}
-#brand{display:flex;justify-content:center;align-items:center;padding:8px 0 4px;background:var(--bg);flex:0 0 auto}
-#brand img{height:clamp(44px,7vh,64px);width:auto;display:block}
+#brand{display:flex;justify-content:center;align-items:center;padding:0;background:#000;flex:0 0 auto}
+#brand img{width:min(62vw,250px);height:auto;display:block}
 #brand[hidden]{display:none}
 #x-dp{padding:0;width:min(96vw,640px);max-height:92vh;border-radius:12px;background:var(--card);color:var(--ink);border:1px solid var(--line)}
 #x-dp form{display:flex;flex-direction:column;max-height:92vh;padding:14px;box-sizing:border-box}
@@ -390,7 +390,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.37"; $("#appver").textContent = "v" + APP_VER;
+const APP_VER = "1.39"; $("#appver").textContent = "v" + APP_VER;
 const Admin = (() => {
 
 const base = () => {

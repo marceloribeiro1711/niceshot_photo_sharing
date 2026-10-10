@@ -7,14 +7,40 @@
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone"],
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
   "orientation": "portrait",
-  "background_color": "#0f1820",
-  "theme_color": "#1f5fbf",
-  "categories": ["photo"],
+  "background_color": "#031c38",
+  "theme_color": "#031c38",
+  "categories": [
+    "photo"
+  ],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
