@@ -140,6 +140,9 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 #splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#031c38;transition:opacity .4s ease}
 #splash img{width:min(60vw,260px);height:auto;border-radius:22%}
 #splash.off{opacity:0;pointer-events:none}
+.pm-slider{display:flex;flex-direction:column;gap:4px;margin-top:12px}
+.pm-lbl{font-size:13px;letter-spacing:.04em}
+.pm-slider input{width:100%}
 </style>
 </head>
 <body>
@@ -394,7 +397,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.41";
+const APP_VER = "1.42";
 (() => { const t0 = performance.now(); const hide = () => { const sp = document.getElementById("splash"); if (!sp) return; sp.classList.add("off"); setTimeout(() => sp.remove(), 450); };
   const go = () => setTimeout(hide, Math.max(0, 1000 - (performance.now() - t0))); // mantém a abertura por pelo menos 1 s
   if (document.readyState === "complete") go(); else window.addEventListener("load", go); })(); $("#appver").textContent = "v" + APP_VER;
@@ -562,30 +565,23 @@ async function adjustPhoto(id, ev) {
     if (!r.ok) throw new Error("não consegui baixar a foto (" + r.status + ")");
     const orig = await r.blob(), u = URL.createObjectURL(orig), im = await img(u);
     const dlg = document.createElement("dialog"); dlg.className = "pmenu";
-    const sl = (k, label, lo, hi) => `<label class="pm-range">${label}: <span id="v-${k}">0</span><input type="range" id="r-${k}" min="${lo}" max="${hi}" value="0"></label>`;
-    dlg.innerHTML = `<p><b>Ajuste da foto</b></p><p class="mute" id="pa-st"></p>
-      ${sl("b", "Brilho", -100, 100)}${sl("c", "Contraste", -100, 100)}${sl("v", "Vibração", -100, 100)}${sl("t", "Temperatura (frio ↔ quente)", -100, 100)}
-      <div class="pm-pair"><figure><img src="${u}" alt=""><figcaption>Antes</figcaption></figure><figure><img id="pa-after" alt=""><figcaption>Depois</figcaption></figure></div>
-      <div class="pm-btns"><button type="button" data-a="auto">Sugestão automática</button><button type="button" data-a="reset">Voltar ao original</button><button type="button" data-a="save">Salvar no Drive</button><button type="button" data-a="cancel">Cancelar</button></div>`;
+    const sl = (k, label) => `<div class="pm-slider"><span class="pm-lbl">${label} <span id="v-${k}">0</span></span><input type="range" id="r-${k}" min="-100" max="100" value="0"></div>`;
+    dlg.innerHTML = `<div class="pm-pair"><figure><img src="${u}" alt=""><figcaption>Antes</figcaption></figure><figure><img id="pa-after" alt=""><figcaption>Depois</figcaption></figure></div>
+      ${sl("b", "BRILHO")}${sl("c", "CONTRASTE")}${sl("v", "VIBRAÇÃO")}${sl("t", "TEMPERATURA")}
+      <div class="pm-btns"><button type="button" data-a="reset">Voltar ao original</button><button type="button" data-a="save">Salvar no Drive</button><button type="button" data-a="cancel">Cancelar</button></div>`;
     document.body.appendChild(dlg); dlg.addEventListener("close", () => { dlg.remove(); URL.revokeObjectURL(u); }); dlg.showModal();
+    const KEYS = ["b", "c", "v", "t"];
     const val = k => Number(dlg.querySelector("#r-" + k).value) / 100;
-    const setVals = o => { for (const k of ["b", "c", "v", "t"]) { const el = dlg.querySelector("#r-" + k); el.value = Math.round((o[k] || 0) * 100); dlg.querySelector("#v-" + k).textContent = el.value; } };
     const params = () => ({ b: val("b"), c: val("c"), v: val("v"), t: val("t") });
     const preview = () => {
-      for (const k of ["b", "c", "v", "t"]) dlg.querySelector("#v-" + k).textContent = dlg.querySelector("#r-" + k).value;
-      const st = dlg.querySelector("#pa-st");
-      try { const p = renderEdit(im, params(), 900); dlg.querySelector("#pa-after").src = p.dataUrl; st.textContent = `Brilho médio: ${Math.round(p.before)} → ${Math.round(p.after)}`; }
-      catch (err) { st.textContent = err.message; }
+      for (const k of KEYS) dlg.querySelector("#v-" + k).textContent = dlg.querySelector("#r-" + k).value;
+      try { dlg.querySelector("#pa-after").src = renderEdit(im, params(), 900).dataUrl; } catch (err) { /* sem prévia: o salvamento é barrado se a foto ficar escura */ }
     };
-    for (const k of ["b", "c", "v", "t"]) dlg.querySelector("#r-" + k).oninput = preview;
-    // sugestão: clareia um pouco fotos escuras e dá contraste e cor leves
-    const bright = await new Promise(res => { const cv = document.createElement("canvas"); cv.width = 64; cv.height = 64 * im.naturalHeight / im.naturalWidth; const g = cv.getContext("2d"); g.drawImage(im, 0, 0, cv.width, cv.height); const dd = g.getImageData(0, 0, cv.width, cv.height).data; let s2 = 0; for (let i = 0; i < dd.length; i += 4) s2 += 0.299 * dd[i] + 0.587 * dd[i + 1] + 0.114 * dd[i + 2]; res(s2 / (dd.length / 4)); });
-    const SUG = { b: bright < 110 ? 0.15 : 0, c: 0.2, v: 0.25, t: 0 };
+    for (const k of KEYS) dlg.querySelector("#r-" + k).oninput = preview;
     dlg.onclick = async e => {
       const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return;
       if (a === "cancel") return dlg.close();
-      if (a === "reset") { setVals({}); return preview(); }
-      if (a === "auto") { setVals(SUG); return preview(); }
+      if (a === "reset") { for (const k of KEYS) dlg.querySelector("#r-" + k).value = 0; return preview(); }
       if (a === "save") {
         if (!confirm("Substituir a foto no Drive pela versão ajustada? A original fica só no seu cartão.")) return;
         try {
