@@ -9,7 +9,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 
-const BUILD = "2026-10-10-b"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
+const BUILD = "2026-10-10-c"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
 const DRIVE = "https://www.googleapis.com/drive/v3";
 const TOKEN_TTL = 60 * 60 * 24 * 3; // sessão do visitante: 3 dias
 const LIST_TTL = 300; // cache da listagem de fotos (segundos): 5 min, compartilhado por região
@@ -164,6 +164,7 @@ async function admin(req, env, p, m) {
   if (!env.ADMIN_KEY || !safeEqual(auth, `Bearer ${env.ADMIN_KEY}`)) throw new HttpError(401, "não autorizado");
   if (p === "/api/admin/photo" && m === "POST") return adminPhoto(req, env);
   if (p === "/api/admin/original" && m === "GET") return adminOriginal(env, new URL(req.url));
+  if (p === "/api/admin/drive-check" && m === "GET") return json(await driveCheck(env));
   let r;
 
   if (p === "/api/admin/events" && m === "GET") {
@@ -556,8 +557,32 @@ async function driveToken(env) {
   const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: `${head}.${claim}.${b64u(sig)}` }) });
   const j = await r.json();
-  if (!j.access_token) throw new HttpError(502, "o Google recusou a conta de serviço");
+  if (!j.access_token) throw new HttpError(502, "o Google recusou a conta de serviço: " + (j.error_description || j.error || "sem detalhe"));
   return j.access_token;
+}
+
+async function googleErr(r) {
+  const j = await r.json().catch(() => ({}));
+  return r.status + " " + (j.error?.message || j.error_description || "sem detalhe do Google");
+}
+
+// diagnóstico: testa cada passo da conta de serviço e da permissão na pasta raiz
+async function driveCheck(env) {
+  const out = [], step = (passo, ok, msg) => out.push({ passo, ok, msg });
+  if (!env.DRIVE_SA) { step("chave DRIVE_SA", false, "não existe no Cloudflare (crie o Secret DRIVE_SA)"); return out; }
+  let sa;
+  try { sa = JSON.parse(env.DRIVE_SA); step("chave DRIVE_SA", true, "lida, conta: " + (sa.client_email || "?")); }
+  catch (e) { step("chave DRIVE_SA", false, "não é um JSON válido: " + e.message); return out; }
+  let token;
+  try { token = await driveToken(env); step("login no Google", true, "token obtido"); }
+  catch (e) { step("login no Google", false, e.message); return out; }
+  const { folderId } = await getSettings(env);
+  if (!folderId) { step("pasta raiz", false, "não configurada no admin"); return out; }
+  const r = await fetch(`${DRIVE}/files/${folderId}?fields=id,name,capabilities(canEdit,canDelete)&supportsAllDrives=true`, { headers: { Authorization: "Bearer " + token } });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) step("acesso à pasta raiz", false, "Google " + r.status + ": " + (j.error?.message || "sem permissão ou pasta errada"));
+  else step("acesso à pasta raiz", !!j.capabilities?.canEdit, j.name + ": " + (j.capabilities?.canEdit ? "pode editar e apagar" : "SOMENTE LEITURA, dê permissão de Editor à conta"));
+  return out;
 }
 
 // POST /api/admin/photo  { action: "delete" | "replace", fileId, data? }
@@ -567,7 +592,7 @@ async function adminPhoto(req, env) {
   const token = await driveToken(env), auth = { Authorization: "Bearer " + token };
   if (b.action === "delete") {
     const r = await fetch(`${DRIVE}/files/${fileId}`, { method: "DELETE", headers: auth });
-    if (!r.ok && r.status !== 404) throw new HttpError(502, "o Drive não apagou a foto (" + r.status + ")");
+    if (!r.ok && r.status !== 404) throw new HttpError(502, "o Drive não apagou a foto: " + await googleErr(r));
     return json({ ok: true, deleted: fileId });
   }
   if (b.action === "replace") {
@@ -576,7 +601,7 @@ async function adminPhoto(req, env) {
     const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
     if (bytes.length > 6000000) throw new HttpError(413, "imagem grande demais");
     const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=id`, { method: "PATCH", headers: { ...auth, "Content-Type": "image/" + m[1] }, body: bytes });
-    if (!r.ok) throw new HttpError(502, "o Drive não salvou a foto (" + r.status + ")");
+    if (!r.ok) throw new HttpError(502, "o Drive não salvou a foto: " + await googleErr(r));
     return json({ ok: true, replaced: fileId });
   }
   throw new HttpError(400, "ação inválida");
