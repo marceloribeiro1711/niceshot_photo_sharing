@@ -9,7 +9,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 
-const BUILD = "2026-10-18-c"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
+const BUILD = "2026-10-18-d"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
 const DRIVE = "https://www.googleapis.com/drive/v3";
 const TOKEN_TTL = 60 * 60 * 24 * 3; // sessão do visitante: 3 dias
 const LIST_TTL = 300; // cache da listagem de fotos (segundos): 5 min, compartilhado por região
@@ -480,7 +480,7 @@ async function mac(req, env, p, m) {
   if (p === "/api/mac/next" && m === "GET") return json(await fila(env).next());
   if (p === "/api/mac/result" && m === "POST") {
     const b = await readJson(req);
-    const state = ["done", "nomatch", "error"].includes(b.state) ? b.state : null;
+    const state = ["done", "nomatch", "noface", "error"].includes(b.state) ? b.state : null;
     if (!state) throw new HttpError(400, "estado inválido");
     const ids = Array.isArray(b.ids) ? b.ids.filter((x) => typeof x === "string" && /^[\w-]{10,80}$/.test(x)).slice(0, 5000) : [];
     return json(await fila(env).result(cleanCode(b.code), Number(b.created) || 0, state, ids));
