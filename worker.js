@@ -9,7 +9,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 
-const BUILD = "2026-10-10-d"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
+const BUILD = "2026-10-18-a"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
 const DRIVE = "https://www.googleapis.com/drive/v3";
 const TOKEN_TTL = 60 * 60 * 24 * 3; // sessão do visitante: 3 dias
 const LIST_TTL = 300; // cache da listagem de fotos (segundos): 5 min, compartilhado por região
@@ -266,7 +266,7 @@ async function saveEvent(env, ev) {
 }
 
 function publicEvent(ev) {
-  return { id: ev.id, name: ev.name, date: ev.date, allowDownload: ev.allowDownload !== false, maxBatch: 10, dateFrom: ev.dateFrom || "", dateTo: ev.dateTo || "" };
+  return { id: ev.id, name: ev.name, date: ev.date, allowDownload: ev.allowDownload !== false, maxBatch: 20, dateFrom: ev.dateFrom || "", dateTo: ev.dateTo || "" };
 }
 
 async function eventFromToken(env, token) {

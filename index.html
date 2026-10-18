@@ -399,7 +399,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.44";
+const APP_VER = "1.45";
 (() => { const t0 = performance.now(); const hide = () => { const sp = document.getElementById("splash"); if (!sp) return; sp.classList.add("off"); setTimeout(() => sp.remove(), 450); };
   const go = () => setTimeout(hide, Math.max(0, 1000 - (performance.now() - t0))); // mantém a abertura por pelo menos 1 s
   if (document.readyState === "complete") go(); else window.addEventListener("load", go); })(); $("#appver").textContent = "v" + APP_VER;
@@ -703,7 +703,7 @@ function draw() {
 }
 function toggleSel(id) {
   if (S.sel.has(id)) S.sel.delete(id);
-  else if (S.sel.size >= (S.info?.maxBatch || 10)) { say(tr("limit", { n: S.info?.maxBatch || 10 })); return false; }
+  else if (S.sel.size >= (S.info?.maxBatch || 20)) { say(tr("limit", { n: S.info?.maxBatch || 20 })); return false; }
   else S.sel.add(id);
   return true;
 }
