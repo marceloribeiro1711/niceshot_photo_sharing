@@ -9,7 +9,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 
-const BUILD = "2026-10-18-a"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
+const BUILD = "2026-10-18-b"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
 const DRIVE = "https://www.googleapis.com/drive/v3";
 const TOKEN_TTL = 60 * 60 * 24 * 3; // sessão do visitante: 3 dias
 const LIST_TTL = 300; // cache da listagem de fotos (segundos): 5 min, compartilhado por região
@@ -63,6 +63,8 @@ async function route(req, env, ctx, url) {
   if ((r = p.match(/^\/api\/download\/([\w-]+)$/)) && m === "GET") return download(env, url, r[1]);
   if (p === "/api/selfie/search" && m === "POST") return selfieSearch(req, env);
   if (p === "/api/selfie/status" && m === "GET") return selfieStatus(env, url);
+  if (p === "/api/ref/search" && m === "POST") return refSearch(req, env);
+  if (p === "/api/ref/status" && m === "GET") return refStatus(env, url);
   if (p.startsWith("/api/mac/")) return mac(req, env, p, m);
   if (p.startsWith("/api/admin/")) return admin(req, env, p, m);
   throw new HttpError(404, "not found");
@@ -451,6 +453,21 @@ async function selfieSearch(req, env) {
   return json(await fila(env).search(code, images));
 }
 
+// App -> Worker: foto de referência (um rosto só, recortada no celular, 256 px). Apagada logo depois da busca.
+async function refSearch(req, env) {
+  await limit(req, "ref", 12, 60);
+  if (Number(req.headers.get("Content-Length") || 0) > 400_000) throw new HttpError(413, "foto grande demais");
+  const b = await readJson(req);
+  const code = cleanCode(b.code);
+  const v = b.image;
+  if (typeof v !== "string" || v.length > 300_000 || !/^data:image\/(jpeg|png|webp);base64,/.test(v)) throw new HttpError(400, "foto inválida");
+  return json(await fila(env).refSearch("r" + code, v));
+}
+
+async function refStatus(env, url) {
+  return json(await fila(env).status("r" + cleanCode(url.searchParams.get("code"))));
+}
+
 // App -> Worker: como está a busca desse código (e se o Mac está ligado).
 async function selfieStatus(env, url) {
   return json(await fila(env).status(cleanCode(url.searchParams.get("code"))));
@@ -479,6 +496,7 @@ export class Fila extends DurableObject {
     this.sql.exec("create table if not exists req(code text primary key, created integer, state text, lease integer, ids text, updated integer)");
     this.sql.exec("create table if not exists img(code text, slot text, data text, primary key(code, slot))");
     this.sql.exec("create table if not exists meta(k text primary key, v integer)");
+    try { this.sql.exec("alter table req add column kind text default 'selfie'"); } catch { /* coluna já existe */ }
   }
 
   lastPoll() {
@@ -491,7 +509,7 @@ export class Fila extends DurableObject {
   }
 
   purge(now) {
-    this.sql.exec("delete from req where created < ?", now - SELFIE_DAYS * 86400000);
+    this.sql.exec("delete from req where (kind = 'ref' and created < ?) or created < ?", now - 3600000, now - SELFIE_DAYS * 86400000);
     this.sql.exec("delete from img where code not in (select code from req)");
   }
 
@@ -505,6 +523,20 @@ export class Fila extends DurableObject {
       "insert into req(code, created, state, lease, ids, updated) values(?,?,?,?,?,?) " +
         "on conflict(code) do update set created=excluded.created, state='pending', lease=0, ids='[]', updated=excluded.updated",
       code, now, "pending", 0, "[]", now
+    );
+    return { state: "pending", online: true };
+  }
+
+  refSearch(key, data) { // key = "r" + código; a referência fica só até o Mac responder
+    if (!this.online()) return { state: "offline", online: false };
+    const now = Date.now();
+    this.purge(now);
+    this.sql.exec("delete from img where code = ?", key);
+    this.sql.exec("insert into img(code, slot, data) values(?,?,?)", key, "ref", data);
+    this.sql.exec(
+      "insert into req(code, created, state, lease, ids, updated, kind) values(?,?,?,?,?,?,?) " +
+        "on conflict(code) do update set created=excluded.created, state='pending', lease=0, ids='[]', updated=excluded.updated, kind='ref'",
+      key, now, "pending", 0, "[]", now, "ref"
     );
     return { state: "pending", online: true };
   }
@@ -524,21 +556,22 @@ export class Fila extends DurableObject {
     this.sql.exec("insert into meta(k, v) values('poll', ?) on conflict(k) do update set v=excluded.v", now);
     this.purge(now);
     const r = this.sql
-      .exec("select code, created from req where state='pending' or (state='processing' and lease < ?) order by created limit 1", now)
+      .exec("select code, created, kind from req where state='pending' or (state='processing' and lease < ?) order by created limit 1", now)
       .toArray();
     if (!r.length) return { request: null };
-    const { code, created } = r[0];
+    const { code, created, kind } = r[0];
     this.sql.exec("update req set state='processing', lease=? where code=?", now + 60000, code);
     const images = {};
     for (const x of this.sql.exec("select slot, data from img where code = ?", code)) images[x.slot] = x.data;
-    return { request: { code, created, images } };
+    return { request: { code, created, kind: kind || "selfie", images } };
   }
 
   result(code, created, state, ids) {
-    const r = this.sql.exec("select created from req where code = ?", code).toArray();
+    const r = this.sql.exec("select created, kind from req where code = ?", code).toArray();
     // ignora resultado de um pedido antigo (a pessoa já buscou de novo) ou que já expirou
     if (!r.length || r[0].created !== created) return { ok: false, ignored: true };
     this.sql.exec("update req set state=?, ids=?, lease=0, updated=? where code=?", state, JSON.stringify(ids), Date.now(), code);
+    if (r[0].kind === "ref") this.sql.exec("delete from img where code = ?", code); // a foto de referência é apagada logo após a busca
     return { ok: true };
   }
 }

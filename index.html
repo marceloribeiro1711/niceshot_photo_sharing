@@ -144,6 +144,19 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 .pm-lbl{font-size:13px;letter-spacing:.04em}
 .pm-slider input{width:100%}
 #x-row[hidden]{display:none}
+#cr,#sim{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;background:var(--bg);padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+#cr[hidden],#sim[hidden]{display:none}
+.crh,.simh{padding:12px 14px;background:var(--card);border-bottom:1px solid var(--line)}
+.crb{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px}
+#crc{max-width:100%;max-height:100%;touch-action:none;border-radius:8px}
+.crl{display:flex;flex-direction:column;gap:6px;padding:8px 14px}
+#cre{margin:0;padding:0 14px;color:var(--red);min-height:1em;font-size:14px}
+.crf,.simf{display:flex;gap:10px;padding:10px 14px;background:var(--card);border-top:1px solid var(--line)}
+.crf button,.simf button{flex:1}
+#simg{flex:1;min-height:0;overflow-y:auto;columns:2 150px;column-gap:4px;padding:6px}
+#simg .t{break-inside:avoid;margin:0 0 4px;display:block}
+#simg img{display:block;width:100%;height:auto}
+#msg{z-index:40 !important}
 </style>
 </head>
 <body>
@@ -203,8 +216,20 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
   <div class="top"><span id="vn"></span><button class="v" id="vs" data-ta="sel_dl"></button></div>
   <button class="side l" id="pv" data-ta="prev_photo">‹</button><button class="side r" id="nx" data-ta="next_photo">›</button>
 </section>
+<section id="cr" hidden>
+  <div class="crh"><b data-t="crop_title"></b></div>
+  <div class="crb"><canvas id="crc"></canvas></div>
+  <label class="crl"><span data-t="crop_size"></span><input type="range" id="crz" min="20" max="100" value="60"></label>
+  <p id="cre"></p>
+  <div class="crf"><button id="crn" data-t="crop_no"></button><button id="cro" class="p" data-t="crop_ok"></button></div>
+</section>
+<section id="sim" hidden>
+  <div class="simh"><b id="simt"></b></div>
+  <div id="simg"></div>
+  <div class="simf"><button id="simd" class="p"></button><button id="simb" data-t="sim_back"></button></div>
+</section>
 <nav class="dock" id="hd"><button class="nv" id="hp" disabled data-ta="prev_ev"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="tb" id="hv" disabled><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span data-t="view_photos"></span></button><button class="tb" id="pfb"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="my_selfie"></span></button><button class="nv" id="hn" disabled data-ta="next_ev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></nav>
-<nav class="dock" id="ad" hidden><button id="sf"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="selfie"></span></button><button id="zm"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span></span></button><button id="dl" disabled><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span></span></button><button class="bkb" data-ta="back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-t="back"></span></button></nav>
+<nav class="dock" id="ad" hidden><button id="sf" disabled><svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></svg><span data-t="similar"></span></button><button id="zm"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span></span></button><button id="dl" disabled><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span></span></button><button class="bkb" data-ta="back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-t="back"></span></button></nav>
 <nav class="dock" id="bd" hidden><button class="bkb" data-ta="back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-t="back"></span></button></nav>
 <input type="file" id="pffile" accept="image/*" capture="user" hidden>
 
@@ -220,6 +245,17 @@ const S = { ev: null, tok: "", photos: [], sel: new Set(), mine: null, mineState
 
 const LANGS = ["en", "pt", "es", "fr"], LANG = LANGS.find(l => (navigator.language || "").toLowerCase().startsWith(l)) || "en", LI = LANGS.indexOf(LANG), LOC = LANG === "en" ? "en-GB" : navigator.language;
 const DICT = {
+  similar: ["Find similar", "Procurar semelhantes", "Buscar parecidas", "Trouver les similaires"],
+  similar_ask: ["The photo you choose is sent to the NiceShot server only to compare the face, and is deleted right after the search. Continue?", "A foto escolhida é enviada ao servidor do NiceShot só para comparar o rosto, e é apagada logo após a busca. Continuar?", "La foto que elijas se envía al servidor de NiceShot solo para comparar el rostro y se borra justo después de la búsqueda. ¿Continuar?", "La photo choisie est envoyée au serveur NiceShot uniquement pour comparer le visage, puis supprimée juste après la recherche. Continuer ?"],
+  similar_prep: ["Preparing the photo…", "Preparando a foto…", "Preparando la foto…", "Préparation de la photo…"],
+  similar_none: ["We didn't find similar photos in this event.", "Não encontramos fotos semelhantes neste evento.", "No encontramos fotos parecidas en este evento.", "Nous n'avons pas trouvé de photos similaires dans cet événement."],
+  sim_title: ["Similar", "Semelhantes", "Parecidas", "Similaires"],
+  sim_back: ["Back to album", "Voltar ao álbum", "Volver al álbum", "Retour à l'album"],
+  crop_title: ["Adjust the face crop", "Ajuste o recorte no rosto", "Ajusta el recorte del rostro", "Ajustez le recadrage du visage"],
+  crop_size: ["Size", "Tamanho", "Tamaño", "Taille"],
+  crop_ok: ["Search", "Buscar", "Buscar", "Rechercher"],
+  crop_no: ["Cancel", "Cancelar", "Cancelar", "Annuler"],
+  crop_small: ["Face too small in this area. Enlarge the crop or choose another photo.", "Rosto pequeno demais nessa área. Amplie o recorte ou escolha outra foto.", "Rostro demasiado pequeño en esta zona. Amplía el recorte o elige otra foto.", "Visage trop petit dans cette zone. Agrandissez le recadrage ou choisissez une autre photo."],
   back: ["Back", "Voltar", "Volver", "Retour"], contact: ["Contact NiceShot", "Fale com a NiceShot", "Contacta con NiceShot", "Contacter NiceShot"],
   pin_prompt: ["Enter the event PIN", "Digite o PIN do evento", "Introduce el PIN del evento", "Saisissez le code PIN de l'événement"], pin_aria: ["4-digit PIN", "PIN de 4 dígitos", "PIN de 4 dígitos", "Code PIN à 4 chiffres"],
   cancel: ["Cancel", "Cancelar", "Cancelar", "Annuler"], sel_dl: ["Select for download", "Selecionar para download", "Seleccionar para descargar", "Sélectionner pour télécharger"],
@@ -288,7 +324,7 @@ async function j(p, o) {
 const post = (p, body) => j(p, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 const thumb = (p, s) => `${API}/api/thumb/${p.id}?s=${s}&k=${p.k}&token=${encodeURIComponent(S.tok)}`;
 const setZm = big => { $("#zm span").textContent = tr(big ? "thumbs" : "enlarge"); };
-const updDl = () => { $("#dl").hidden = S.info?.allowDownload === false; $("#dl").disabled = !S.sel.size; $("#dl span").textContent = tr("download") + (S.sel.size ? ` (${S.sel.size})` : ""); };
+const updDl = () => { $("#dl").hidden = S.info?.allowDownload === false; $("#dl").disabled = !S.sel.size; $("#sf").disabled = S.sel.size !== 1; $("#dl span").textContent = tr("download") + (S.sel.size ? ` (${S.sel.size})` : ""); };
 function show(id) {
   for (const s of ["home", "pinbox", "album", "adm", "prof"]) $("#" + s).hidden = s !== id;
   $("#vw").hidden = true; $("main").hidden = false; setZm(false);
@@ -399,7 +435,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.45";
+const APP_VER = "1.46";
 (() => { const t0 = performance.now(); const hide = () => { const sp = document.getElementById("splash"); if (!sp) return; sp.classList.add("off"); setTimeout(() => sp.remove(), 450); };
   const go = () => setTimeout(hide, Math.max(0, 1000 - (performance.now() - t0))); // mantém a abertura por pelo menos 1 s
   if (document.readyState === "complete") go(); else window.addEventListener("load", go); })(); $("#appver").textContent = "v" + APP_VER;
@@ -733,8 +769,8 @@ let tx = null;
 $("#vw").addEventListener("touchstart", e => { tx = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
 $("#vw").addEventListener("touchend", e => { if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(dx) > 60) step(dx < 0 ? 1 : -1); }, { passive: true });
 addEventListener("keydown", e => { if ($("#vw").hidden) return; if (e.key === "ArrowRight") step(1); else if (e.key === "ArrowLeft") step(-1); else if (e.key === "Escape") closeViewer(); });
-/* ---- download (até 10) ---- */
-$("#dl").onclick = async () => {
+/* ---- download (até 20) ---- */
+async function downloadSel() {
   const ids = [...S.sel], files = []; $("#dl").disabled = true;
   try {
     for (let i = 0; i < ids.length; i++) {
@@ -751,8 +787,9 @@ $("#dl").onclick = async () => {
     }
     else { for (const f of files) { const a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; a.click(); await new Promise(r => setTimeout(r, 500)); URL.revokeObjectURL(a.href); } say(tr("downloaded")); S.sel.clear(); }
   } catch (e) { say(e.message); }
-  draw(); if (!$("#vw").hidden) vsync();
-};
+  draw(); if (!$("#vw").hidden) vsync(); if (!$("#sim").hidden) drawSim();
+}
+$("#dl").onclick = downloadSel;
 $("#sv").onclick = async () => {
   try { await navigator.share({ files: S.files }); S.sel.clear(); $("#sv").hidden = true; draw(); }
   catch (e) { if (e.name !== "AbortError") say(tr("share_fail")); }
@@ -768,8 +805,130 @@ const loadFace = () => faceReady ||= (async () => {
 const img = (src, cors) => new Promise((ok, no) => { const i = new Image(); if (cors) i.crossOrigin = "anonymous"; i.onload = () => ok(i); i.onerror = no; i.src = src; });
 const prog = (t, pct) => { $("#pg").hidden = pct < 0; $("#pt").textContent = t; $("#pb").style.width = Math.max(pct, 0) + "%"; };
 
-$("#sf").onclick = () => startSearch();
+$("#sf").onclick = () => findSimilar();
 $("#pc").onclick = () => { S.run++; prog("", -1); };
+
+/* ---- procurar semelhantes: recorte no celular, busca no Mac, foto de referência apagada depois ---- */
+// verificação do recorte (mesmas regras do perfil, sem gravar nada no perfil)
+async function refCheck(cv) {
+  let res, q;
+  try {
+    say(tr(faceReady ? "pf_check" : "face_prep")); await loadFace();
+    q = photoQuality(cv);
+    res = await faceapi.detectAllFaces(cv, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }));
+  } catch { return null; } // sem o modelo (ex.: sem internet) o recorte não é bloqueado
+  const area = r => r.box.width * r.box.height;
+  res.sort((a, b) => area(b) - area(a));
+  if (!res.length) return "pf_none";
+  if (res.length > 1 && area(res[1]) >= 0.3 * area(res[0])) return "pf_multi";
+  if (q.mean < 60) return "pf_dark";
+  if (q.mean > 215) return "pf_bright";
+  if (q.sharp < 40) return "pf_blur";
+  return null;
+}
+// tela de recorte: sugere o rosto (com folga); o usuário arrasta a área e ajusta o tamanho
+function openCrop(blob) {
+  return new Promise(async resolve => {
+    const url = URL.createObjectURL(blob), im = await img(url).catch(() => null);
+    if (!im) { URL.revokeObjectURL(url); say(tr("pf_err")); return resolve(null); }
+    const W = im.naturalWidth, H = im.naturalHeight, mn = Math.min(W, H), cv = $("#crc"), cx = cv.getContext("2d");
+    const sc = Math.min(1, 640 / W); cv.width = Math.round(W * sc); cv.height = Math.round(H * sc);
+    const box = { x: 0, y: 0, s: mn * 0.6 }, z = $("#crz");
+    const clamp = () => { box.s = Math.min(Math.max(box.s, Math.min(40, mn)), mn); box.x = Math.min(Math.max(box.x, 0), W - box.s); box.y = Math.min(Math.max(box.y, 0), H - box.s); };
+    const center = () => { box.x = (W - box.s) / 2; box.y = (H - box.s) / 2; };
+    const paint = () => {
+      const bx = box.x * sc, by = box.y * sc, bs = box.s * sc;
+      cx.drawImage(im, 0, 0, cv.width, cv.height);
+      cx.fillStyle = "rgba(0,0,0,.55)"; cx.fillRect(0, 0, cv.width, cv.height);
+      cx.save(); cx.beginPath(); cx.rect(bx, by, bs, bs); cx.clip(); cx.drawImage(im, 0, 0, cv.width, cv.height); cx.restore();
+      cx.strokeStyle = "#d8e24a"; cx.lineWidth = 3; cx.strokeRect(bx, by, bs, bs);
+    };
+    const done = v => {
+      cv.onpointerdown = cv.onpointermove = cv.onpointerup = cv.onpointercancel = null; z.oninput = null;
+      $("#cro").onclick = $("#crn").onclick = null; $("#cr").hidden = true; $("#cre").textContent = "";
+      URL.revokeObjectURL(url); resolve(v);
+    };
+    try {
+      await loadFace();
+      const found = await faceapi.detectAllFaces(im, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }));
+      if (found.length) {
+        const f = found.sort((a, b) => b.box.width * b.box.height - a.box.width * a.box.height)[0].box;
+        box.s = Math.min(Math.max(f.width, f.height) * 1.8, mn);
+        box.x = f.x + f.width / 2 - box.s / 2; box.y = f.y + f.height / 2 - box.s / 2;
+      } else center();
+    } catch { center(); }
+    clamp(); z.value = Math.round(box.s / mn * 100); paint();
+    z.oninput = () => { const mx = box.x + box.s / 2, my = box.y + box.s / 2; box.s = mn * z.value / 100; box.x = mx - box.s / 2; box.y = my - box.s / 2; clamp(); paint(); };
+    let drag = null;
+    cv.onpointerdown = e => { const r = cv.getBoundingClientRect(); drag = { x: e.clientX, y: e.clientY, bx: box.x, by: box.y, k: cv.width / r.width }; cv.setPointerCapture(e.pointerId); };
+    cv.onpointermove = e => { if (!drag) return; box.x = drag.bx + (e.clientX - drag.x) * drag.k / sc; box.y = drag.by + (e.clientY - drag.y) * drag.k / sc; clamp(); paint(); };
+    cv.onpointerup = cv.onpointercancel = () => { drag = null; };
+    $("#crn").onclick = () => done(null);
+    $("#cro").onclick = async () => {
+      const side = Math.round(box.s), x = Math.round(box.x), y = Math.round(box.y);
+      if (side < 120) { $("#cre").textContent = tr("crop_small"); return; }
+      const big = document.createElement("canvas"); big.width = big.height = side;
+      big.getContext("2d").drawImage(im, x, y, side, side, 0, 0, side, side);
+      const bad = await refCheck(big);
+      if (bad) { $("#cre").textContent = tr(bad); return; }
+      const out = document.createElement("canvas"); out.width = out.height = 256;
+      out.getContext("2d").drawImage(big, 0, 0, 256, 256);
+      done(out.toDataURL("image/jpeg", 0.9)); // só o rosto, em 256 px
+    };
+    $("#cre").textContent = "";
+    $("#cr").hidden = false;
+  });
+}
+async function findSimilar() {
+  if (S.busy || S.sel.size !== 1) return;
+  const p = S.photos.find(x => x.id === [...S.sel][0]);
+  if (!p) return;
+  if (!localStorage.getItem("ns_consent_ref")) {
+    if (!confirm(tr("similar_ask"))) return;
+    localStorage.setItem("ns_consent_ref", "1");
+  }
+  S.busy = true;
+  let blob = null;
+  prog(tr("similar_prep"), 0);
+  try {
+    const r = await fetch(`${API}/api/download/${p.id}?k=${p.k}&token=${encodeURIComponent(S.tok)}`);
+    if (!r.ok) throw new Error(tr("dl_fail"));
+    blob = await r.blob();
+  } catch (e) { say(e.message || tr("dl_fail")); }
+  prog("", -1);
+  const data = blob ? await openCrop(blob) : null;
+  if (!data) { S.busy = false; return draw(); }
+  const code = await myCode();
+  let r = { state: "error" };
+  try {
+    const res = await fetch(apiBase() + "/api/ref/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, image: data }) });
+    if (res.ok) r = await res.json();
+  } catch { /* sem rede: cai no aviso abaixo */ }
+  if (r.state !== "pending") { S.busy = false; say(tr("svc_off")); return draw(); }
+  const st = await waitFor(code, "/api/ref/status");
+  S.busy = false; prog("", -1);
+  if (!st) return;
+  if (st.state === "done" && st.ids && st.ids.length) { S.simIds = new Set(st.ids); S.sel.clear(); return openSim(); }
+  say(st.state === "nomatch" || st.state === "done" ? tr("similar_none") : tr("svc_off"));
+  draw();
+}
+function openSim() {
+  $("#ad").hidden = true; $("main").hidden = true; $("#sim").hidden = false;
+  drawSim();
+}
+// popup: só as semelhantes, com marcação para download (até 20) e o botão de voltar ao álbum sem nada marcado
+function drawSim() {
+  if ($("#sim").hidden || !S.simIds) return;
+  const list = S.photos.filter(p => S.simIds.has(p.id)), canDl = S.info?.allowDownload !== false;
+  $("#simt").textContent = tr("sim_title") + ` (${list.length})`;
+  $("#simg").innerHTML = list.map(p => `<div class="t ${S.sel.has(p.id) ? "on" : ""}" data-id="${p.id}"><img loading="lazy" alt="" src="${thumb(p, 400)}" style="aspect-ratio:${p.w && p.h ? p.w + " / " + p.h : "3 / 4"}">${canDl ? '<button class="k" tabindex="-1">✓</button>' : ""}</div>`).join("");
+  $("#simd").hidden = !canDl; $("#simd").disabled = !S.sel.size;
+  $("#simd").textContent = tr("download") + (S.sel.size ? ` (${S.sel.size})` : "");
+}
+function closeSim() { S.simIds = null; S.sel.clear(); $("#sim").hidden = true; $("#ad").hidden = false; $("main").hidden = false; draw(); }
+$("#simb").onclick = closeSim;
+$("#simg").onclick = e => { const t = e.target.closest(".t"); if (!t) return; if (toggleSel(t.dataset.id)) drawSim(); };
+$("#simd").onclick = downloadSel;
 /* ---- busca por selfie: o Mac faz a comparação (Photo Server 0.4) ---- */
 const apiBase = () => (localStorage.getItem("ns_url") || API).trim().replace(/\/+$/, "");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -779,8 +938,8 @@ async function myCode() {
   if (!c) { c = Array.from(crypto.getRandomValues(new Uint8Array(24)), b => (b % 36).toString(36)).join(""); await pput("code", c).catch(() => {}); }
   return c;
 }
-async function selfieStatus(code) {
-  try { const r = await fetch(apiBase() + "/api/selfie/status?code=" + encodeURIComponent(code)); return r.ok ? await r.json() : { state: "error" }; }
+async function selfieStatus(code, path = "/api/selfie/status") {
+  try { const r = await fetch(apiBase() + path + "?code=" + encodeURIComponent(code)); return r.ok ? await r.json() : { state: "error" }; }
   catch { return { state: "error" }; }
 }
 function applyResult(st, quiet) {
@@ -794,14 +953,14 @@ function applyResult(st, quiet) {
   S.tab = "mine"; draw();
 }
 // contador de 20 s ("Agrupando suas fotos") e depois de 10 s ("Preparando a apresentação das fotos"); consulta o correio a cada 2 s e mostra o resultado assim que chegar
-async function waitFor(code) {
+async function waitFor(code, path = "/api/selfie/status") {
   const run = S.run;
   for (const [secs, key] of [[20, "agr"], [10, "prep"]]) {
     for (let t = secs; t > 0; t--) {
       if (S.run !== run) return null;
       prog(`${tr(key)} (${t}s)`, (secs - t + 1) / secs * 100);
       await sleep(1000);
-      if (t % 2 === 0) { const st = await selfieStatus(code); if (["done", "nomatch", "error", "offline"].includes(st.state)) { S.dbg = "status " + st.state; return st; } }
+      if (t % 2 === 0) { const st = await selfieStatus(code, path); if (["done", "nomatch", "error", "offline"].includes(st.state)) { S.dbg = "status " + st.state; return st; } }
     }
   }
   S.dbg = "sem resposta do Mac em 30 s";
