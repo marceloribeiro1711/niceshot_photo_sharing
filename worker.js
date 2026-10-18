@@ -9,7 +9,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 
-const BUILD = "2026-10-18-b"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
+const BUILD = "2026-10-18-c"; // versão do Worker; o admin avisa se o publicado estiver desatualizado
 const DRIVE = "https://www.googleapis.com/drive/v3";
 const TOKEN_TTL = 60 * 60 * 24 * 3; // sessão do visitante: 3 dias
 const LIST_TTL = 300; // cache da listagem de fotos (segundos): 5 min, compartilhado por região
@@ -456,11 +456,11 @@ async function selfieSearch(req, env) {
 // App -> Worker: foto de referência (um rosto só, recortada no celular, 256 px). Apagada logo depois da busca.
 async function refSearch(req, env) {
   await limit(req, "ref", 12, 60);
-  if (Number(req.headers.get("Content-Length") || 0) > 400_000) throw new HttpError(413, "foto grande demais");
+  if (Number(req.headers.get("Content-Length") || 0) > 800_000) throw new HttpError(413, "foto grande demais");
   const b = await readJson(req);
   const code = cleanCode(b.code);
   const v = b.image;
-  if (typeof v !== "string" || v.length > 300_000 || !/^data:image\/(jpeg|png|webp);base64,/.test(v)) throw new HttpError(400, "foto inválida");
+  if (typeof v !== "string" || v.length > 600_000 || !/^data:image\/(jpeg|png|webp);base64,/.test(v)) throw new HttpError(400, "foto inválida");
   return json(await fila(env).refSearch("r" + code, v));
 }
 

@@ -153,10 +153,16 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 #cre{margin:0;padding:0 14px;color:var(--red);min-height:1em;font-size:14px}
 .crf,.simf{display:flex;gap:10px;padding:10px 14px;background:var(--card);border-top:1px solid var(--line)}
 .crf button,.simf button{flex:1}
-#simg{flex:1;min-height:0;overflow-y:auto;columns:2 150px;column-gap:4px;padding:6px}
-#simg .t{break-inside:avoid;margin:0 0 4px;display:block}
-#simg img{display:block;width:100%;height:auto}
+#simg{position:relative;flex:1;min-height:0;overflow-y:auto;padding:6px}
+#simg .k{font-size:0}
+#simg .k::after{content:"✓";font-size:18px;line-height:30px;color:#fff}
+#simg .t:not(.on) .k::after{content:""}
 #msg{z-index:40 !important}
+#bz{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35)}
+#bz[hidden]{display:none}
+.bzb{max-width:86vw;padding:18px 22px;border-radius:12px;background:var(--card);color:var(--ink);border:1px solid var(--line);text-align:center;font-size:16px;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.bzb::before{content:"";display:block;width:28px;height:28px;margin:0 auto 10px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:bzspin 1s linear infinite}
+@keyframes bzspin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -225,9 +231,10 @@ textarea{width:100%;min-height:90px;padding:10px;border:1px solid var(--line);bo
 </section>
 <section id="sim" hidden>
   <div class="simh"><b id="simt"></b></div>
-  <div id="simg"></div>
+  <div id="simg" class="g"></div>
   <div class="simf"><button id="simd" class="p"></button><button id="simb" data-t="sim_back"></button></div>
 </section>
+<div id="bz" hidden><div class="bzb"><span id="bzt"></span></div></div>
 <nav class="dock" id="hd"><button class="nv" id="hp" disabled data-ta="prev_ev"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="tb" id="hv" disabled><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span data-t="view_photos"></span></button><button class="tb" id="pfb"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-t="my_selfie"></span></button><button class="nv" id="hn" disabled data-ta="next_ev"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></nav>
 <nav class="dock" id="ad" hidden><button id="sf" disabled><svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></svg><span data-t="similar"></span></button><button id="zm"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg><span></span></button><button id="dl" disabled><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span></span></button><button class="bkb" data-ta="back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-t="back"></span></button></nav>
 <nav class="dock" id="bd" hidden><button class="bkb" data-ta="back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span data-t="back"></span></button></nav>
@@ -245,6 +252,9 @@ const S = { ev: null, tok: "", photos: [], sel: new Set(), mine: null, mineState
 
 const LANGS = ["en", "pt", "es", "fr"], LANG = LANGS.find(l => (navigator.language || "").toLowerCase().startsWith(l)) || "en", LI = LANGS.indexOf(LANG), LOC = LANG === "en" ? "en-GB" : navigator.language;
 const DICT = {
+  wait_photo: ["Preparing the photo. This may take a moment…", "Preparando a foto escolhida. Isso pode demorar um pouco…", "Preparando la foto elegida. Puede tardar un poco…", "Préparation de la photo choisie. Cela peut prendre un moment…"],
+  wait_check: ["Checking the crop…", "Conferindo o recorte…", "Revisando el recorte…", "Vérification du recadrage…"],
+  wait_send: ["Please wait. Looking for similar photos, this may take a moment…", "Aguarde. Buscando semelhantes, isso pode demorar um pouco…", "Espere. Buscando parecidas, puede tardar un poco…", "Patientez. Recherche des similaires, cela peut prendre un moment…"],
   similar: ["Find similar", "Procurar semelhantes", "Buscar parecidas", "Trouver les similaires"],
   similar_ask: ["The photo you choose is sent to the NiceShot server only to compare the face, and is deleted right after the search. Continue?", "A foto escolhida é enviada ao servidor do NiceShot só para comparar o rosto, e é apagada logo após a busca. Continuar?", "La foto que elijas se envía al servidor de NiceShot solo para comparar el rostro y se borra justo después de la búsqueda. ¿Continuar?", "La photo choisie est envoyée au serveur NiceShot uniquement pour comparer le visage, puis supprimée juste après la recherche. Continuer ?"],
   similar_prep: ["Preparing the photo…", "Preparando a foto…", "Preparando la foto…", "Préparation de la photo…"],
@@ -435,7 +445,7 @@ const pfGot = async e => {
   drawProfile();
 };
 $("#pffile").onchange = pfGot;
-const APP_VER = "1.46";
+const APP_VER = "1.49";
 (() => { const t0 = performance.now(); const hide = () => { const sp = document.getElementById("splash"); if (!sp) return; sp.classList.add("off"); setTimeout(() => sp.remove(), 450); };
   const go = () => setTimeout(hide, Math.max(0, 1000 - (performance.now() - t0))); // mantém a abertura por pelo menos 1 s
   if (document.readyState === "complete") go(); else window.addEventListener("load", go); })(); $("#appver").textContent = "v" + APP_VER;
@@ -696,8 +706,8 @@ const waitMsg = () => {
 const RATIO = new Map();
 const camTile = () => `<div class="camt"><svg viewBox="0 0 24 24"><path d="M3 8h3l2-3h8l2 3h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg><b>${esc(S.info?.name || "")}</b></div>`;
 // coloca cada foto na coluna mais curta; o tile da câmera ocupa meia altura de uma foto vertical 3:4
-function doLayout() {
-  const g = $("#gr"); if (!g) return;
+function doLayout(g = $("#gr")) {
+  if (!g) return;
   const items = [...g.children].filter(el => el.classList.contains("t") || el.classList.contains("camt"));
   if (!items.length) { g.style.height = ""; return; }
   const W = g.clientWidth; if (!W) return;
@@ -719,7 +729,7 @@ function doLayout() {
   g.style.height = Math.max(...h) + "px";
 }
 let laying = 0;
-function scheduleLayout() { cancelAnimationFrame(laying); laying = requestAnimationFrame(doLayout); }
+function scheduleLayout() { cancelAnimationFrame(laying); laying = requestAnimationFrame(() => { doLayout($("#gr")); doLayout($("#simg")); }); }
 // se a proporção real da foto for diferente da informada, corrige a posição dela
 function measured(el, img) {
   if (!img.naturalWidth || !el.dataset.id) return;
@@ -809,6 +819,8 @@ $("#sf").onclick = () => findSimilar();
 $("#pc").onclick = () => { S.run++; prog("", -1); };
 
 /* ---- procurar semelhantes: recorte no celular, busca no Mac, foto de referência apagada depois ---- */
+// aviso central "Aguarde" (enquanto a foto é preparada, conferida ou a busca roda)
+function busy(on, key) { const b = $("#bz"); if (!b) return; b.hidden = !on; if (on) $("#bzt").textContent = tr(key); }
 // verificação do recorte (mesmas regras do perfil, sem gravar nada no perfil)
 async function refCheck(cv) {
   let res, q;
@@ -829,8 +841,9 @@ async function refCheck(cv) {
 // tela de recorte: sugere o rosto (com folga); o usuário arrasta a área e ajusta o tamanho
 function openCrop(blob) {
   return new Promise(async resolve => {
+    busy(true, "wait_photo");
     const url = URL.createObjectURL(blob), im = await img(url).catch(() => null);
-    if (!im) { URL.revokeObjectURL(url); say(tr("pf_err")); return resolve(null); }
+    if (!im) { busy(false); URL.revokeObjectURL(url); say(tr("pf_err")); return resolve(null); }
     const W = im.naturalWidth, H = im.naturalHeight, mn = Math.min(W, H), cv = $("#crc"), cx = cv.getContext("2d");
     const sc = Math.min(1, 640 / W); cv.width = Math.round(W * sc); cv.height = Math.round(H * sc);
     const box = { x: 0, y: 0, s: mn * 0.6 }, z = $("#crz");
@@ -853,7 +866,7 @@ function openCrop(blob) {
       const found = await faceapi.detectAllFaces(im, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }));
       if (found.length) {
         const f = found.sort((a, b) => b.box.width * b.box.height - a.box.width * a.box.height)[0].box;
-        box.s = Math.min(Math.max(f.width, f.height) * 1.8, mn);
+        box.s = Math.min(Math.max(f.width, f.height) * 3, mn);
         box.x = f.x + f.width / 2 - box.s / 2; box.y = f.y + f.height / 2 - box.s / 2;
       } else center();
     } catch { center(); }
@@ -869,13 +882,16 @@ function openCrop(blob) {
       if (side < 120) { $("#cre").textContent = tr("crop_small"); return; }
       const big = document.createElement("canvas"); big.width = big.height = side;
       big.getContext("2d").drawImage(im, x, y, side, side, 0, 0, side, side);
+      busy(true, "wait_check");
       const bad = await refCheck(big);
+      busy(false);
       if (bad) { $("#cre").textContent = tr(bad); return; }
-      const out = document.createElement("canvas"); out.width = out.height = 256;
-      out.getContext("2d").drawImage(big, 0, 0, 256, 256);
-      done(out.toDataURL("image/jpeg", 0.9)); // só o rosto, em 256 px
+      const out = document.createElement("canvas"); out.width = out.height = 512;
+      out.getContext("2d").drawImage(big, 0, 0, 512, 512);
+      done(out.toDataURL("image/jpeg", 0.9)); // só o rosto, em 512 px
     };
     $("#cre").textContent = "";
+    busy(false);
     $("#cr").hidden = false;
   });
 }
@@ -889,24 +905,25 @@ async function findSimilar() {
   }
   S.busy = true;
   let blob = null;
-  prog(tr("similar_prep"), 0);
+  busy(true, "wait_photo"); prog(tr("similar_prep"), 0);
   try {
     const r = await fetch(`${API}/api/download/${p.id}?k=${p.k}&token=${encodeURIComponent(S.tok)}`);
     if (!r.ok) throw new Error(tr("dl_fail"));
     blob = await r.blob();
   } catch (e) { say(e.message || tr("dl_fail")); }
-  prog("", -1);
+  prog("", -1); busy(false);
   const data = blob ? await openCrop(blob) : null;
   if (!data) { S.busy = false; return draw(); }
+  busy(true, "wait_send");
   const code = await myCode();
   let r = { state: "error" };
   try {
     const res = await fetch(apiBase() + "/api/ref/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, image: data }) });
     if (res.ok) r = await res.json();
   } catch { /* sem rede: cai no aviso abaixo */ }
-  if (r.state !== "pending") { S.busy = false; say(tr("svc_off")); return draw(); }
+  if (r.state !== "pending") { S.busy = false; busy(false); say(tr("svc_off")); return draw(); }
   const st = await waitFor(code, "/api/ref/status");
-  S.busy = false; prog("", -1);
+  S.busy = false; prog("", -1); busy(false);
   if (!st) return;
   if (st.state === "done" && st.ids && st.ids.length) { S.simIds = new Set(st.ids); S.sel.clear(); return openSim(); }
   say(st.state === "nomatch" || st.state === "done" ? tr("similar_none") : tr("svc_off"));
@@ -921,7 +938,8 @@ function drawSim() {
   if ($("#sim").hidden || !S.simIds) return;
   const list = S.photos.filter(p => S.simIds.has(p.id)), canDl = S.info?.allowDownload !== false;
   $("#simt").textContent = tr("sim_title") + ` (${list.length})`;
-  $("#simg").innerHTML = list.map(p => `<div class="t ${S.sel.has(p.id) ? "on" : ""}" data-id="${p.id}"><img loading="lazy" alt="" src="${thumb(p, 400)}" style="aspect-ratio:${p.w && p.h ? p.w + " / " + p.h : "3 / 4"}">${canDl ? '<button class="k" tabindex="-1">✓</button>' : ""}</div>`).join("");
+  $("#simg").innerHTML = list.map(p => `<div class="t ${S.sel.has(p.id) ? "on" : ""}" data-id="${p.id}" data-r="${p.w && p.h ? (p.w / p.h).toFixed(4) : ""}"><img loading="lazy" alt="" src="${thumb(p, 400)}">${canDl ? '<button class="k" tabindex="-1" aria-hidden="true"></button>' : ""}</div>`).join("");
+  scheduleLayout();
   $("#simd").hidden = !canDl; $("#simd").disabled = !S.sel.size;
   $("#simd").textContent = tr("download") + (S.sel.size ? ` (${S.sel.size})` : "");
 }
